@@ -457,18 +457,13 @@ function loadList(key, defaults) {
 function saveList(key, arr) { localStorage.setItem(key, JSON.stringify(arr)); }
 
 let MANAGERS   = loadList('resort_managers',   ['Nguyễn Công Hoàng Long', 'Lê Thị Nga']);
-let STAFF_LIST = loadList('resort_staff',      ['Dung', 'Phấn', 'Tiến', 'Hưng', 'Long']);
+let STAFF_LIST = loadList('resort_staff',      ['Dung', 'Phấn', 'Tiến', 'Hưng', 'Long', 'Thuê ngoài']);
 
 let currentUser = null, currentRole = 'manager', activeFilter = 'all', selectedPct = null, activeDetailTaskId = null;
 let mgrPending = [], staffPending = [], editPending = [];
 
-let tasks = [
-  { id:1, title:'Dọn dẹp bãi biển khu A',    desc:'Nhặt rác, san phẳng cát, sắp xếp ghế phao.',           area:'Bãi biển phía Nam',    taskDate:'20/03/2026', start:'07:00', end:'09:00', assignees:['Dung','Phấn'],     status:'new',      pct:0,   mgrPhotos:[], staffPhotos:[], assignedAt:'20/03/2026 06:00', completedAt:'' },
-  { id:2, title:'Kiểm tra hệ thống hồ bơi',   desc:'Kiểm tra máy bơm, nồng độ clo, ghi nhật ký.',          area:'Khu hồ bơi trung tâm', taskDate:'20/03/2026', start:'08:00', end:'10:00', assignees:['Tiến'],            status:'progress', pct:70,  mgrPhotos:[], staffPhotos:[], assignedAt:'20/03/2026 07:30', completedAt:'' },
-  { id:3, title:'Trang trí sảnh đón khách',   desc:'Sắp xếp hoa tươi, cân bằng đèn chiếu sáng.',           area:'Sảnh chính tầng 1',    taskDate:'20/03/2026', start:'06:00', end:'08:00', assignees:['Dung','Hưng'],     status:'done',     pct:100, mgrPhotos:[], staffPhotos:[], assignedAt:'20/03/2026 05:30', completedAt:'20/03/2026 07:55' },
-  { id:4, title:'Chuẩn bị buffet sáng',       desc:'Bày biện thức ăn, kiểm tra nhiệt độ, bổ sung liên tục.',area:'Nhà hàng tầng 2',     taskDate:'20/03/2026', start:'06:30', end:'10:00', assignees:['Phấn','Hưng'],     status:'progress', pct:50,  mgrPhotos:[], staffPhotos:[], assignedAt:'20/03/2026 06:00', completedAt:'' },
-];
-let nextId = 5;
+let tasks = [];
+let nextId = 1;
 
 // ══════════════════════════════════════════════
 //  DRIVE UPLOAD
@@ -1395,6 +1390,7 @@ function openDetail(id, role){
       ${t.desc?`<div style="background:var(--gray-50);border-radius:8px;padding:12px;margin:12px 0;font-size:13px;color:var(--gray-700);line-height:1.6">${t.desc}</div>`:''}
       <div style="margin:14px 0 8px"><div class="info-label" style="margin-bottom:8px">📷 Ảnh hiện trường (quản lý gửi)</div><div class="detail-photos">${mgrPH}</div></div>
       <div style="margin:14px 0 8px"><div class="info-label" style="margin-bottom:8px">📸 Ảnh xác nhận (nhân viên gửi)</div><div class="detail-photos">${staffPH}</div></div>
+      ${t.staffNote?`<div style="background:var(--gray-50);border-radius:8px;padding:12px;margin:12px 0;border-left:3px solid var(--teal)"><div style="font-size:11px;font-weight:600;color:var(--gray-400);margin-bottom:4px">💬 GHI CHÚ NHÂN VIÊN</div><div style="font-size:13px;color:var(--gray-700);line-height:1.6">${t.staffNote}</div></div>`:''}
       <button onclick="openEditModal(${t.id})" style="width:100%;padding:13px;background:var(--teal-light);color:var(--teal-dark);border:1.5px solid var(--teal);border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px">✏️ Sửa công việc</button>
       ${t.status!=='done'?`<button onclick="markDoneMgr(${t.id})" style="width:100%;padding:13px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px">✓ Đánh dấu hoàn thành</button>`:''}
       <button onclick="delTask(${t.id})" style="width:100%;padding:11px;background:var(--red-light);color:var(--red);border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px">🗑 Xóa công việc</button>`;
@@ -1582,6 +1578,8 @@ function openStaffDetail(id){
       <div class="pct-buttons">
         ${[20,50,70].map(p=>`<button class="pct-btn ${selectedPct===p?'selected':''}" id="pct-${p}" onclick="selectPct(${p})">${p}%</button>`).join('')}
       </div>
+      <label class="form-label" style="margin-bottom:6px">GHI CHÚ CỦA NHÂN VIÊN</label>
+      <textarea id="staff-note-input" class="form-input" style="font-size:13px;padding:10px 12px;min-height:72px;resize:none;margin-bottom:12px" placeholder="Nhập ghi chú, vấn đề phát sinh, báo cáo thêm...">${t.staffNote||''}</textarea>
       <label class="form-label" style="margin-bottom:6px">TẢI ẢNH XÁC NHẬN
         <span id="staff-drive-status" style="display:none"></span>
       </label>
@@ -1593,7 +1591,10 @@ function openStaffDetail(id){
       <div style="height:12px"></div>
       <button class="btn-done" id="btn-staff-done" onclick="submitProgress('done')">✅ Hoàn thành công việc</button>
       <button id="btn-staff-pct" onclick="submitProgress('progress')" style="width:100%;padding:13px;background:var(--amber-light);color:var(--amber);border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer">⏳ Cập nhật tiến độ</button>
-    `:`<div style="background:var(--teal-light);border-radius:10px;padding:16px;text-align:center;margin-top:12px"><div style="font-size:32px;margin-bottom:6px">🎉</div><div style="font-weight:600;color:var(--teal-dark);font-size:15px">Đã hoàn thành!</div></div>`}`;
+    `:`
+      ${t.staffNote?`<div style="background:var(--gray-50);border-radius:8px;padding:12px;margin:12px 0;border-left:3px solid var(--teal)"><div style="font-size:11px;font-weight:600;color:var(--gray-400);margin-bottom:4px">GHI CHÚ CỦA NHÂN VIÊN</div><div style="font-size:13px;color:var(--gray-700);line-height:1.6">${t.staffNote}</div></div>`:''}
+      <div style="background:var(--teal-light);border-radius:10px;padding:16px;text-align:center;margin-top:12px"><div style="font-size:32px;margin-bottom:6px">🎉</div><div style="font-weight:600;color:var(--teal-dark);font-size:15px">Đã hoàn thành!</div></div>
+    `}`;
   document.getElementById('modal-detail-staff').classList.add('open');
 }
 
@@ -1614,6 +1615,9 @@ async function submitProgress(status){
 
   const newPhotos=getUrls(staffPending);
   t.staffPhotos=[...t.staffPhotos,...newPhotos];
+  // Lưu ghi chú của nhân viên
+  const noteEl=document.getElementById('staff-note-input');
+  if(noteEl) t.staffNote=noteEl.value.trim();
   if (status==='done'){ t.status='done'; t.pct=100; t.completedAt=fmtDT(new Date()); } else { t.status='progress'; t.pct=selectedPct; }
 
   await syncToSheet(t);
@@ -1676,6 +1680,7 @@ async function syncToSheet(task){
       taskDate: task.taskDate||'',
       status:task.status, pct:task.pct,
       photos:[...task.mgrPhotos,...task.staffPhotos],
+      staffNote: task.staffNote||'',
       assignedAt: task.assignedAt||'',
       completedAt: task.completedAt||'',
       updatedAt: fmtDT(new Date())
@@ -1728,7 +1733,7 @@ function getSheet() {
     const h = ["ID","Công việc","Khu vực","Nhân viên phụ trách",
                "Ngày thực hiện","Giờ thực hiện","Trạng thái","Tiến độ %",
                "Giờ giao việc","Giờ hoàn thành",
-               "Ảnh Drive (link)","Cập nhật lúc"];
+               "Ghi chú NV","Ảnh Drive (link)","Cập nhật lúc"];
     sh.getRange(1,1,1,h.length).setValues([h])
       .setFontWeight("bold")
       .setBackground("#0D9373")
@@ -1736,7 +1741,8 @@ function getSheet() {
     sh.setFrozenRows(1);
     sh.setColumnWidth(8, 160);
     sh.setColumnWidth(9, 160);
-    sh.setColumnWidth(10, 300);
+    sh.setColumnWidth(11, 200);
+    sh.setColumnWidth(12, 300);
   }
   return sh;
 }
@@ -1791,6 +1797,7 @@ function doPost(e) {
         d.pct + "%",
         d.assignedAt  || "",
         d.completedAt || "",
+        d.staffNote   || "",
         photoLinks,
         d.updatedAt || new Date().toLocaleString("vi-VN")
       ];
@@ -1811,7 +1818,7 @@ function doPost(e) {
 
       // Nếu có ảnh: tạo hyperlink có thể click trong ô
       if (d.photos && d.photos.length > 0) {
-        const cell = sh.getRange(rowIndex, 11);
+        const cell = sh.getRange(rowIndex, 12);
         const richText = SpreadsheetApp.newRichTextValue()
           .setText(d.photos.join("\\n"))
           .build();
@@ -1851,10 +1858,11 @@ function doGet(e) {
       const data = sh.getDataRange().getValues();
       if (data.length <= 1) return out({ tasks: [] }); // Chỉ có header
 
-      // Cấu trúc cột (12 cột, index 0-11):
+      // Cấu trúc cột (13 cột, index 0-12):
       // 0=ID, 1=Tên, 2=Khu vực, 3=Nhân viên, 4=Ngày thực hiện,
       // 5=Giờ thực hiện, 6=Trạng thái, 7=Tiến độ%,
-      // 8=Giờ giao việc, 9=Giờ hoàn thành, 10=Ảnh Drive, 11=Cập nhật lúc
+      // 8=Giờ giao việc, 9=Giờ hoàn thành, 10=Ghi chú NV,
+      // 11=Ảnh Drive, 12=Cập nhật lúc
 
       const tasks = [];
       for (let i = 1; i < data.length; i++) {
@@ -1878,8 +1886,8 @@ function doGet(e) {
         const startTime = timeParts[0] || "08:00";
         const endTime   = timeParts[1] || "10:00";
 
-        // Ảnh từ cột 11 (index 10) — mỗi link 1 dòng
-        const photoRaw  = String(row[10] || "");
+        // Ảnh từ cột 12 (index 11) — mỗi link 1 dòng
+        const photoRaw  = String(row[11] || "");
         const allPhotos = photoRaw ? photoRaw.split("\\n").filter(Boolean) : [];
 
         tasks.push({
@@ -1894,6 +1902,7 @@ function doGet(e) {
           pct,
           assignedAt:  String(row[8] || ""),
           completedAt: String(row[9] || ""),
+          staffNote:   String(row[10] || ""),
           mgrPhotos:   allPhotos,
           staffPhotos: [],
           desc:        "",
