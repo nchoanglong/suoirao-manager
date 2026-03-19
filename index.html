@@ -320,11 +320,40 @@ textarea.form-input{resize:none;min-height:72px}
   </div>
   <div class="content" style="padding-top:0" id="staff-content"></div>
   <nav class="bottom-nav">
+    <button class="nav-btn" onclick="openStaffSettings()" style="flex:1;justify-content:center;flex-direction:column;gap:3px">
+      <span style="font-size:22px">⚙️</span>
+      <span style="font-size:10px;font-weight:500;color:var(--gray-400)">Cài đặt</span>
+    </button>
     <button class="nav-btn" onclick="logout()" style="flex:1;justify-content:center;flex-direction:row;gap:8px;color:var(--red)">
       <span style="font-size:13px;color:var(--gray-400)">Đăng xuất:</span>
       <span style="font-size:13px;font-weight:600;color:var(--red)">Thoát</span>
     </button>
   </nav>
+</div>
+
+<!-- ═══ MODAL: CÀI ĐẶT NHÂN VIÊN ═══ -->
+<div class="modal-overlay" id="modal-staff-settings">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚙️ Cài đặt kết nối</div>
+
+    <div style="background:var(--teal-light);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:18px;font-size:13px;color:var(--teal-dark);line-height:1.6">
+      Nhập URL Apps Script để đồng bộ dữ liệu công việc với Google Sheet. Hỏi quản lý để lấy URL này.
+    </div>
+
+    <div class="modal-section">
+      <label class="form-label">URL APPS SCRIPT</label>
+      <input type="url" class="form-input" id="staff-script-url"
+        placeholder="https://script.google.com/macros/s/.../exec"
+        style="font-size:13px">
+      <div id="staff-url-status" style="margin-top:8px;font-size:12px;color:var(--gray-400)"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeModal('modal-staff-settings')">Hủy</button>
+      <button class="btn-pf" onclick="saveStaffScriptUrl()">💾 Lưu & kết nối</button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ MODAL: TẠO CÔNG VIỆC ═══ -->
@@ -729,7 +758,7 @@ async function silentRefresh(){
     const res  = await fetch(SCRIPT_URL+'?action=getTasks', { method:'GET' });
     const json = await res.json();
     if (json.tasks && Array.isArray(json.tasks)){
-      tasks  = json.tasks.map(t=>({...t, assignedAt:normalizeDT(t.assignedAt||''), completedAt:normalizeDT(t.completedAt||'')}));
+      tasks  = json.tasks.map(t=>({...t, taskDate:normalizeDateOnly(t.taskDate||''), assignedAt:normalizeDT(t.assignedAt||''), completedAt:normalizeDT(t.completedAt||'')}));
       nextId = json.tasks.length ? Math.max(...json.tasks.map(t=>t.id||0))+1 : 1;
       // Cập nhật giao diện tùy theo màn hình đang hiển thị
       if (currentRole==='manager'){
@@ -759,6 +788,56 @@ async function manualRefresh(){
     showToast('⚠️ Không thể kết nối Sheet','error');
   } finally {
     btns.forEach(b=>{ b.style.animation=''; b.disabled=false; });
+  }
+}
+
+// ── Cài đặt nhân viên ────────────────────────
+function openStaffSettings(){
+  const input = document.getElementById('staff-script-url');
+  const status = document.getElementById('staff-url-status');
+  input.value = SCRIPT_URL || '';
+  status.textContent = SCRIPT_URL ? '✅ Đang kết nối: ' + SCRIPT_URL.slice(0,40) + '...' : 'Chưa có URL — chưa đồng bộ được dữ liệu.';
+  status.style.color = SCRIPT_URL ? 'var(--teal)' : 'var(--gray-400)';
+  document.getElementById('modal-staff-settings').classList.add('open');
+}
+
+async function saveStaffScriptUrl(){
+  const v = document.getElementById('staff-script-url').value.trim();
+  const status = document.getElementById('staff-url-status');
+  if (v && !v.startsWith('https://script.google.com')){
+    showToast('URL không hợp lệ!','error'); return;
+  }
+  SCRIPT_URL = v;
+  localStorage.setItem('resort_script_url', v);
+  if (!v){
+    showToast('Đã xóa URL','');
+    closeModal('modal-staff-settings');
+    return;
+  }
+  // Thử kết nối ngay
+  status.textContent = '⏳ Đang kiểm tra kết nối...';
+  status.style.color = 'var(--amber)';
+  try {
+    const res = await fetch(v + '?action=getTasks', { method:'GET' });
+    const json = await res.json();
+    if (json.tasks !== undefined){
+      status.textContent = '✅ Kết nối thành công!';
+      status.style.color = 'var(--teal)';
+      showToast('✅ Đã lưu và kết nối thành công!','success');
+      // Tải dữ liệu ngay
+      await loadFromSheet();
+      renderStaffView();
+      startAutoRefresh();
+      setTimeout(()=>closeModal('modal-staff-settings'), 800);
+    } else {
+      status.textContent = '⚠️ Kết nối được nhưng không có dữ liệu.';
+      status.style.color = 'var(--amber)';
+      showToast('URL đã lưu','success');
+    }
+  } catch(e){
+    status.textContent = '❌ Không kết nối được. Kiểm tra lại URL.';
+    status.style.color = 'var(--red)';
+    showToast('Không kết nối được!','error');
   }
 }
 
@@ -830,7 +909,7 @@ function taskCardHTML(t, role){
   return `<div class="task-card status-${t.status}" onclick="openDetail(${t.id},'${role}')">
     <div class="task-header"><div class="task-title">${t.title}</div><span class="badge ${bc}">${bl}</span></div>
     <div class="task-meta">
-      ${t.taskDate?`<span>📅 ${t.taskDate}</span>`:''}
+      ${t.taskDate?`<span>📅 ${normalizeDateOnly(t.taskDate)}</span>`:''}
       <span>🕐 ${t.start}–${t.end}</span>
       ${t.area?`<span>📍 ${t.area}</span>`:''} ${sNote}
     </div>
@@ -1520,7 +1599,7 @@ function openDetail(id, role){
     document.getElementById('detail-mgr-content').innerHTML=`
       <div class="modal-title">${t.title}</div>
       <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-val">${sl[t.status]}</span></div>
-      ${t.taskDate?`<div class="info-row"><span class="info-label">📅 Ngày thực hiện</span><span class="info-val" style="font-weight:700;color:var(--gray-900)">${t.taskDate}</span></div>`:''}
+      ${t.taskDate?`<div class="info-row"><span class="info-label">📅 Ngày thực hiện</span><span class="info-val" style="font-weight:700;color:var(--gray-900)">${normalizeDateOnly(t.taskDate)}</span></div>`:''}
       <div class="info-row"><span class="info-label">Thời gian thực hiện</span><span class="info-val">${t.start} – ${t.end}</span></div>
       <div class="info-row"><span class="info-label">Khu vực</span><span class="info-val">${t.area||'—'}</span></div>
       <div class="info-row"><span class="info-label">Nhân viên</span><span class="info-val">${t.assignees.join(', ')}</span></div>
@@ -1566,8 +1645,11 @@ function openEditModal(id){
   document.getElementById('edit-desc').value   = t.desc||'';
   // Convert dd/MM/yyyy → yyyy-MM-dd for date input
   if (t.taskDate) {
-    const [dd,mm,yy]=t.taskDate.split('/');
-    document.getElementById('edit-date').value=`${yy}-${mm}-${dd}`;
+    const clean = normalizeDateOnly(t.taskDate);
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(clean)) {
+      const [dd,mm,yy]=clean.split('/');
+      document.getElementById('edit-date').value=`${yy}-${mm}-${dd}`;
+    }
   } else {
     const today=new Date(); const yy=today.getFullYear(), mm=String(today.getMonth()+1).padStart(2,'0'), dd=String(today.getDate()).padStart(2,'0');
     document.getElementById('edit-date').value=`${yy}-${mm}-${dd}`;
@@ -1707,7 +1789,7 @@ function openStaffDetail(id){
   document.getElementById('detail-staff-content').innerHTML=`
     <div class="modal-title">${t.title}</div>
     ${t.desc?`<div style="background:var(--teal-light);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px;color:var(--teal-dark);line-height:1.6">💬 ${t.desc}</div>`:''}
-    ${t.taskDate?`<div class="info-row"><span class="info-label">📅 Ngày thực hiện</span><span class="info-val" style="font-weight:700;color:var(--gray-900)">${t.taskDate}</span></div>`:''}
+    ${t.taskDate?`<div class="info-row"><span class="info-label">📅 Ngày thực hiện</span><span class="info-val" style="font-weight:700;color:var(--gray-900)">${normalizeDateOnly(t.taskDate)}</span></div>`:''}
     <div class="info-row"><span class="info-label">Thời gian thực hiện</span><span class="info-val">${t.start} – ${t.end}</span></div>
     <div class="info-row"><span class="info-label">Khu vực</span><span class="info-val">${t.area||'—'}</span></div>
     <div class="info-row"><span class="info-label">📅 Được giao lúc</span><span class="info-val" style="color:var(--teal-dark)">${normalizeDT(t.assignedAt)||'—'}</span></div>
@@ -1777,6 +1859,7 @@ async function loadFromSheet(){
       // Normalise date strings that may come back in raw JS Date.toString() format
       tasks = json.tasks.map(t=>({
         ...t,
+        taskDate:    normalizeDateOnly(t.taskDate||''),
         assignedAt:  normalizeDT(t.assignedAt||''),
         completedAt: normalizeDT(t.completedAt||''),
       }));
@@ -2148,6 +2231,20 @@ function normalizeDT(str){
   // ISO string hoặc bất kỳ định dạng nào khác → parse rồi format lại
   const d = new Date(str);
   if (!isNaN(d)) return fmtDT(d);
+  return str;
+}
+
+// Chuyển bất kỳ chuỗi ngày nào về dạng dd/MM/yyyy (không có giờ)
+function normalizeDateOnly(str){
+  if(!str) return '';
+  // Đã đúng định dạng dd/MM/yyyy
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) return str;
+  // Thử parse
+  const d = new Date(str);
+  if (!isNaN(d)){
+    const pad=n=>String(n).padStart(2,'0');
+    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+  }
   return str;
 }
 
