@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Resort Task Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal:#0D9373;--teal-light:#E0F5EE;--teal-dark:#075C49;
+  --amber:#D97706;--amber-light:#FEF3C7;
+  --red:#DC2626;--red-light:#FEE2E2;
+  --blue:#1a73e8;
+  --gray-50:#F9FAFB;--gray-100:#F3F4F6;--gray-200:#E5E7EB;
+  --gray-400:#9CA3AF;--gray-500:#6B7280;--gray-700:#374151;--gray-900:#111827;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);--shadow-lg:0 8px 32px rgba(0,0,0,.14);
+  --radius:14px;--radius-sm:8px;--font:'Be Vietnam Pro',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--gray-100);color:var(--gray-900);min-height:100vh}
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+#screen-login{background:linear-gradient(160deg,#0D9373 0%,#075C49 60%,#053D32 100%);align-items:center;justify-content:center;padding:32px 24px}
+.login-logo{text-align:center;margin-bottom:36px}
+.login-logo .icon{width:72px;height:72px;background:rgba(255,255,255,.15);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:36px}
+.login-logo h1{color:white;font-size:24px;font-weight:700;letter-spacing:-.5px}
+.login-logo p{color:rgba(255,255,255,.6);font-size:13px;margin-top:4px}
+.login-card{background:white;border-radius:20px;padding:28px 24px;width:100%;max-width:380px;box-shadow:var(--shadow-lg)}
+.login-card h2{font-size:18px;font-weight:700;color:var(--gray-900);margin-bottom:4px}
+.login-card p{font-size:13px;color:var(--gray-500);margin-bottom:22px}
+.role-tabs{display:flex;background:var(--gray-100);border-radius:10px;padding:3px;margin-bottom:20px}
+.role-tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;transition:all .2s}
+.role-tab.active{background:white;color:var(--teal);box-shadow:var(--shadow-sm)}
+.form-group{margin-bottom:16px}
+.form-label{font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:6px;display:block;letter-spacing:.03em}
+.form-select,.form-input{width:100%;padding:12px 14px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-family:var(--font);font-size:15px;color:var(--gray-900);background:white;appearance:none;-webkit-appearance:none;outline:none;transition:border-color .2s}
+.form-select:focus,.form-input:focus{border-color:var(--teal)}
+.select-wrap{position:relative}
+.select-wrap::after{content:'▾';position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--gray-400);pointer-events:none}
+textarea.form-input{resize:none;min-height:72px}
+.btn-primary{width:100%;padding:14px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary:active{transform:scale(.98);background:var(--teal-dark)}
+
+.setup-banner{border-radius:var(--radius-sm);padding:11px 13px;margin-bottom:14px;display:flex;gap:9px;align-items:flex-start}
+.setup-banner.warn{background:#FFF7ED;border:1.5px solid #FED7AA}
+.setup-banner.ok{background:#F0FDF4;border:1.5px solid #BBF7D0}
+.sb-icon{font-size:17px;flex-shrink:0;margin-top:1px}
+.sb-text{font-size:12px;color:var(--gray-700);line-height:1.5}
+.sb-text strong{color:var(--gray-900)}
+
+.topbar{background:white;padding:16px 20px 12px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-sm);position:sticky;top:0;z-index:10}
+.topbar-left h2{font-size:18px;font-weight:700;color:var(--gray-900)}
+.topbar-left p{font-size:12px;color:var(--gray-500);margin-top:1px}
+.avatar-btn{width:38px;height:38px;border-radius:50%;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--teal-dark);cursor:pointer;border:none;font-family:var(--font)}
+
+.bottom-nav{background:white;border-top:1px solid var(--gray-200);display:flex;position:sticky;bottom:0;z-index:10;padding-bottom:env(safe-area-inset-bottom,0)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;cursor:pointer;border:none;background:none;font-family:var(--font);gap:3px}
+.nav-btn .nav-icon{font-size:22px;transition:transform .15s}
+.nav-btn .nav-label{font-size:10px;font-weight:500;color:var(--gray-400)}
+.nav-btn.active .nav-label{color:var(--teal);font-weight:600}
+.nav-btn.active .nav-icon{transform:scale(1.1)}
+
+.content{flex:1;overflow-y:auto;padding:16px}
+
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+.stat-card{background:white;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm)}
+.stat-card .s-label{font-size:11px;font-weight:600;color:var(--gray-400);letter-spacing:.04em;margin-bottom:6px}
+.stat-card .s-val{font-size:28px;font-weight:700;line-height:1}
+.stat-card .s-sub{font-size:11px;color:var(--gray-400);margin-top:4px}
+.s-val.green{color:var(--teal)}.s-val.amber{color:var(--amber)}.s-val.red{color:var(--red)}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:14px;font-weight:700;color:var(--gray-700)}
+.btn-add{display:flex;align-items:center;gap:5px;padding:7px 14px;background:var(--teal);color:white;border:none;border-radius:100px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(13,147,115,.3)}
+.btn-add:active{transform:scale(.97)}
+
+.task-card{background:white;border-radius:var(--radius);padding:16px;margin-bottom:10px;box-shadow:var(--shadow-sm);border-left:4px solid transparent;cursor:pointer;animation:fadeIn .2s ease-out}
+.task-card.status-new{border-left-color:var(--red)}
+.task-card.status-progress{border-left-color:var(--amber)}
+.task-card.status-done{border-left-color:var(--teal);opacity:.75}
+.task-card.status-unassigned{border-left-color:#8B5CF6}
+.task-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.task-title{font-size:15px;font-weight:600;color:var(--gray-900);flex:1;padding-right:8px;line-height:1.3}
+.badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;white-space:nowrap;flex-shrink:0}
+.badge-new{background:var(--red-light);color:var(--red)}
+.badge-progress{background:var(--amber-light);color:var(--amber)}
+.badge-done{background:var(--teal-light);color:var(--teal-dark)}
+.badge-unassigned{background:#EDE9FE;color:#5B21B6}
+.task-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.task-meta span{font-size:12px;color:var(--gray-500)}
+.task-assignees{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.assignee-chip{font-size:11px;padding:3px 10px;background:var(--gray-100);border-radius:100px;color:var(--gray-700);font-weight:500}
+.progress-row{display:flex;align-items:center;gap:8px}
+.progress-bar{flex:1;height:5px;background:var(--gray-200);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;background:var(--teal);transition:width .4s}
+.progress-fill.amber{background:var(--amber)}
+.progress-label{font-size:11px;font-weight:600;color:var(--gray-500);min-width:28px;text-align:right}
+.thumb-strip{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.thumb{width:56px;height:44px;border-radius:8px;overflow:hidden;background:var(--gray-100);border:1px solid var(--gray-200);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+.thumb img{width:100%;height:100%;object-fit:cover}
+
+.filter-row{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-chip{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:600;border:1.5px solid var(--gray-200);background:white;color:var(--gray-500);cursor:pointer;white-space:nowrap;transition:all .15s}
+.filter-chip.active{background:var(--teal);border-color:var(--teal);color:white}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:white;border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:24px 20px 40px;animation:slideUp .25s ease-out}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-handle{width:40px;height:4px;background:var(--gray-200);border-radius:2px;margin:0 auto 20px}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:20px;color:var(--gray-900)}
+.modal-section{margin-bottom:18px}
+.modal-section .form-label{display:block;font-size:12px;font-weight:600;color:var(--gray-500);margin-bottom:6px;letter-spacing:.04em}
+.modal-section .form-input,.modal-section .form-select{font-size:14px;padding:11px 14px}
+.staff-list{display:flex;flex-wrap:wrap;gap:6px}
+.staff-chip{padding:7px 14px;border-radius:100px;font-size:13px;font-weight:500;border:1.5px solid var(--gray-200);background:white;color:var(--gray-700);cursor:pointer;transition:all .15s}
+.staff-chip.selected{background:var(--teal-light);border-color:var(--teal);color:var(--teal-dark)}
+
+.upload-area{border:2px dashed var(--gray-200);border-radius:var(--radius-sm);padding:18px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-area:hover{border-color:var(--teal);background:var(--teal-light)}
+.upload-area .up-icon{font-size:28px;margin-bottom:6px}
+.upload-area p{font-size:13px;color:var(--gray-400)}
+.upload-area p small{display:block;font-size:11px;margin-top:3px}
+.upload-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.preview-wrap{position:relative;width:76px;height:60px}
+.preview-img{width:76px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--gray-200)}
+.preview-del{position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:var(--red);border:none;border-radius:50%;color:white;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font);font-weight:700;line-height:1}
+
+.drive-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:100px;font-weight:600;margin-top:6px}
+.drive-badge.ok{background:#E8F5E9;color:#2E7D32}
+.drive-badge.uploading{background:#FFF8E1;color:#F57F17}
+.drive-badge.fail{background:var(--red-light);color:var(--red)}
+.drive-badge.local{background:var(--gray-100);color:var(--gray-500)}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;margin-right:5px;vertical-align:middle}
+
+.btn-row{display:flex;gap:10px;margin-top:4px}
+.btn-secondary{flex:1;padding:13px;background:var(--gray-100);color:var(--gray-700);border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer}
+.btn-pf{flex:2;padding:13px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-pf:disabled{background:var(--gray-400);cursor:not-allowed}
+.btn-pf:not(:disabled):active{background:var(--teal-dark)}
+
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--gray-100)}
+.info-row:last-child{border-bottom:none}
+.info-label{font-size:12px;color:var(--gray-400);font-weight:500}
+.info-val{font-size:13px;font-weight:600;color:var(--gray-800);text-align:right;max-width:60%}
+.detail-photos{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.detail-photo{width:84px;height:66px;border-radius:8px;object-fit:cover;border:1px solid var(--gray-200);cursor:pointer}
+.detail-photo.ph{background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:22px}
+.pct-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.pct-btn{padding:12px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;background:white;color:var(--gray-700);transition:all .15s}
+.pct-btn.selected{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
+.btn-done{width:100%;padding:15px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:16px;font-weight:700;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-done:not(:disabled):active{background:var(--teal-dark)}
+.btn-done:disabled{background:var(--gray-400);cursor:not-allowed}
+
+.my-task-header{background:linear-gradient(135deg,var(--teal),var(--teal-dark));padding:20px;color:white;border-radius:0 0 20px 20px;margin-bottom:16px}
+.my-task-header h2{font-size:20px;font-weight:700}
+.my-task-header p{font-size:13px;opacity:.8;margin-top:3px}
+.my-stats{display:flex;gap:12px;margin-top:14px}
+.my-stat{flex:1;background:rgba(255,255,255,.15);border-radius:10px;padding:10px;text-align:center}
+.my-stat .n{font-size:22px;font-weight:700}
+.my-stat .l{font-size:10px;opacity:.8;margin-top:1px}
+
+.sheet-card{background:white;border-radius:var(--radius);padding:20px;margin-bottom:12px;box-shadow:var(--shadow-sm)}
+.sheet-card h3{font-size:15px;font-weight:700;margin-bottom:12px;color:var(--gray-900)}
+.sheet-table{width:100%;border-collapse:collapse;font-size:12px}
+.sheet-table th{background:var(--gray-50);padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--gray-500);letter-spacing:.04em;border-bottom:1px solid var(--gray-200)}
+.sheet-table td{padding:9px 10px;border-bottom:1px solid var(--gray-100);color:var(--gray-700);vertical-align:middle}
+.sheet-table tr:last-child td{border-bottom:none}
+.sheet-badge{display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700}
+.btn-sheet{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;background:var(--blue);color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:10px}
+.step-guide{background:var(--teal-light);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.step-guide h3{font-size:14px;font-weight:700;color:var(--teal-dark);margin-bottom:10px}
+.step-item{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.step-num{width:22px;height:22px;background:var(--teal);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.step-text{font-size:13px;color:var(--teal-dark);line-height:1.5}
+.step-text code{background:rgba(13,147,115,.15);padding:1px 5px;border-radius:4px;font-size:11px;font-family:monospace;word-break:break-all}
+.script-box{background:var(--gray-50);border-radius:8px;padding:12px;font-family:monospace;font-size:11px;color:var(--gray-700);line-height:1.7;overflow-x:auto;white-space:pre-wrap;max-height:280px;overflow-y:auto;border:1px solid var(--gray-200)}
+.url-row{display:flex;gap:8px;align-items:center}
+.url-row input{flex:1;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;color:var(--gray-900);outline:none;transition:border-color .2s}
+.url-row input:focus{border-color:var(--teal)}
+.url-row button{padding:10px 16px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+
+.empty-state{text-align:center;padding:48px 24px;color:var(--gray-400)}
+.empty-state .e-icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:14px}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--gray-900);color:white;padding:11px 20px;border-radius:100px;font-size:13px;font-weight:500;z-index:200;opacity:0;transition:all .25s;white-space:nowrap;max-width:90vw;text-align:center;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.success{background:#166534}
+#toast.error{background:var(--red)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── LOADING OVERLAY ── */
+#loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.96);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+#loading-overlay.show{display:flex}
+.loading-spinner{width:40px;height:40px;border:3px solid var(--gray-200);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite}
+.loading-text{font-size:14px;font-weight:500;color:var(--gray-500)}
+.loading-sub{font-size:12px;color:var(--gray-400)}
+
+/* ── CALENDAR TAB ── */
+.cal-view-tabs{display:flex;background:var(--gray-100);border-radius:10px;padding:3px;margin-bottom:16px}
+.cal-view-tab{flex:1;text-align:center;padding:8px 4px;border-radius:8px;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;transition:all .2s}
+.cal-view-tab.active{background:white;color:var(--teal);box-shadow:var(--shadow-sm);font-weight:600}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-nav-btn{width:36px;height:36px;border:1.5px solid var(--gray-200);border-radius:50%;background:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray-700);transition:all .15s}
+.cal-nav-btn:active{background:var(--gray-100)}
+.cal-period{font-size:15px;font-weight:700;color:var(--gray-900)}
+.chart-card{background:white;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm);margin-bottom:14px}
+.chart-card h3{font-size:13px;font-weight:600;color:var(--gray-500);letter-spacing:.04em;margin-bottom:12px}
+.chart-wrap{position:relative;height:200px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:14px}
+.cal-day-label{text-align:center;font-size:10px;font-weight:600;color:var(--gray-400);padding:4px 0;letter-spacing:.03em}
+.cal-day{min-height:44px;border-radius:8px;padding:4px 3px;cursor:pointer;transition:all .15s;position:relative;display:flex;flex-direction:column;align-items:center;gap:2px}
+.cal-day:hover{background:var(--gray-100)}
+.cal-day.today{background:var(--teal-light)}
+.cal-day.today .cal-day-num{color:var(--teal-dark);font-weight:700}
+.cal-day.has-done{background:#F0FDF4}
+.cal-day.other-month .cal-day-num{color:var(--gray-300)}
+.cal-day-num{font-size:13px;font-weight:500;color:var(--gray-700);line-height:1}
+.cal-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.cal-dot.done{background:var(--teal)}
+.cal-dot.progress{background:var(--amber)}
+.cal-dot.new{background:var(--red)}
+.cal-dots-row{display:flex;gap:2px;flex-wrap:wrap;justify-content:center}
+.cal-day-total{font-size:9px;font-weight:700;color:var(--teal-dark);background:var(--teal-light);border-radius:100px;padding:1px 5px;min-width:16px;text-align:center}
+.day-detail-card{background:white;border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm);margin-bottom:10px;border-left:4px solid var(--teal)}
+.day-detail-title{font-size:14px;font-weight:600;color:var(--gray-900);margin-bottom:4px}
+.day-detail-meta{font-size:12px;color:var(--gray-500);display:flex;gap:10px;flex-wrap:wrap}
+.summary-row{display:flex;gap:8px;margin-bottom:14px}
+.sum-card{flex:1;background:white;border-radius:var(--radius-sm);padding:12px 8px;text-align:center;box-shadow:var(--shadow-sm)}
+.sum-card .sn{font-size:20px;font-weight:700}
+.sum-card .sl{font-size:10px;color:var(--gray-400);margin-top:2px;font-weight:500}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="screen-login" class="screen active">
+  <div class="login-logo">
+    <div class="icon">🌴</div>
+    <h1>Suối Rao Ecolodge</h1>
+    <p>Phần mềm quản lý</p>
+  </div>
+  <div class="login-card">
+    <h2>Đăng nhập</h2>
+    <p>Chọn vai trò và tên của bạn để tiếp tục</p>
+    <div class="role-tabs">
+      <div class="role-tab active" onclick="setRole('manager')">🏢 Quản lý</div>
+      <div class="role-tab" onclick="setRole('staff')">👷 Nhân viên</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">CHỌN TÊN</label>
+      <div class="select-wrap">
+        <select class="form-select" id="login-name" onchange="onNameChange()"><option value="">-- Chọn tên --</option></select>
+      </div>
+    </div>
+    <div class="form-group" id="pwd-group" style="display:none">
+      <label class="form-label">MẬT KHẨU</label>
+      <div style="position:relative">
+        <input type="password" class="form-input" id="login-pwd" placeholder="Nhập mật khẩu" style="padding-right:44px" onkeydown="if(event.key==='Enter')doLogin()">
+        <button onclick="togglePwd()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:var(--gray-400);padding:0;line-height:1" id="pwd-eye">👁</button>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Vào app →</button>
+  </div>
+</div>
+
+<!-- ═══ MANAGER ═══ -->
+<div id="screen-manager" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2>🌴 Suối Rao Ecolodge</h2>
+      <p id="mgr-date"></p>
+    </div>
+    <button class="avatar-btn" id="mgr-avatar" onclick="logout()"></button>
+  </div>
+  <div class="content" id="mgr-content"></div>
+  <nav class="bottom-nav" id="mgr-nav">
+    <button class="nav-btn active" onclick="showMgrTab('tasks',this)"><span class="nav-icon">📋</span><span class="nav-label">Công việc</span></button>
+    <button class="nav-btn" onclick="showMgrTab('calendar',this)"><span class="nav-icon">📅</span><span class="nav-label">Lịch</span></button>
+    <button class="nav-btn" onclick="showMgrTab('staff',this)"><span class="nav-icon">👥</span><span class="nav-label">Nhân viên</span></button>
+    <button class="nav-btn" onclick="showMgrTab('sheet',this)"><span class="nav-icon">📊</span><span class="nav-label">Sheet</span></button>
+    <button class="nav-btn" id="nav-accounts" style="display:none" onclick="showMgrTab('accounts',this)"><span class="nav-icon">🔐</span><span class="nav-label">Tài khoản</span></button>
+  </nav>
+</div>
+
+<!-- ═══ STAFF ═══ -->
+<div id="screen-staff" class="screen">
+  <div class="my-task-header">
+    <h2>Xin chào, <span id="staff-name-display">Nhân viên</span> 👋</h2>
+    <p id="staff-date-display"></p>
+    <div class="my-stats">
+      <div class="my-stat"><div class="n" id="s-total">0</div><div class="l">Tổng việc</div></div>
+      <div class="my-stat"><div class="n" id="s-pending">0</div><div class="l">Chưa xong</div></div>
+      <div class="my-stat"><div class="n" id="s-done">0</div><div class="l">Hoàn thành</div></div>
+    </div>
+  </div>
+  <div class="content" style="padding-top:0" id="staff-content"></div>
+  <nav class="bottom-nav">
+    <button class="nav-btn" onclick="logout()" style="flex:1;justify-content:center;flex-direction:row;gap:8px;color:var(--red)">
+      <span style="font-size:13px;color:var(--gray-400)">Đăng xuất:</span>
+      <span style="font-size:13px;font-weight:600;color:var(--red)">Thoát</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ═══ MODAL: TẠO CÔNG VIỆC ═══ -->
+<div class="modal-overlay" id="modal-create">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">➕ Tạo công việc mới</div>
+    <div class="modal-section">
+      <label class="form-label">TÊN CÔNG VIỆC *</label>
+      <input type="text" class="form-input" id="new-title" placeholder="VD: Dọn dẹp bãi biển khu A">
+    </div>
+    <div class="modal-section">
+      <label class="form-label">MÔ TẢ CHI TIẾT</label>
+      <textarea class="form-input" id="new-desc" placeholder="Mô tả yêu cầu cụ thể cho nhân viên..."></textarea>
+    </div>
+    <div class="modal-section">
+      <label class="form-label">NGÀY THỰC HIỆN *</label>
+      <input type="date" class="form-input" id="new-date">
+    </div>
+    <div class="modal-section" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label class="form-label">GIỜ BẮT ĐẦU *</label><input type="time" class="form-input" id="new-start" value="07:00"></div>
+      <div><label class="form-label">GIỜ KẾT THÚC *</label><input type="time" class="form-input" id="new-end" value="09:00"></div>
+    </div>
+    <div class="modal-section">
+      <label class="form-label">KHU VỰC</label>
+      <input type="text" class="form-input" id="new-area" placeholder="VD: Bãi biển khu Nam">
+    </div>
+    <div class="modal-section">
+      <label class="form-label">PHÂN CÔNG NHÂN VIÊN <span style="font-weight:400;color:var(--gray-400)">(bỏ trống = Chưa xác định)</span></label>
+      <div class="staff-list" id="assign-list"></div>
+    </div>
+    <div class="modal-section">
+      <label class="form-label">ẢNH HIỆN TRƯỜNG (ảnh tự lưu vào Google Drive)</label>
+      <div class="upload-area" onclick="document.getElementById('mgr-photo-input').click()">
+        <div class="up-icon">📷</div>
+        <p>Nhấn để chọn ảnh từ máy<small>Ảnh sẽ tự động lưu vào thư mục "Suối Rao Ecolodge" trong Drive</small></p>
+      </div>
+      <input type="file" id="mgr-photo-input" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(this,'mgr')">
+      <div id="mgr-drive-status"></div>
+      <div class="upload-preview" id="mgr-preview"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeModal('modal-create')">Hủy</button>
+      <button class="btn-pf" id="btn-create-task" onclick="createTask()">✓ Tạo công việc</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: SỬA CÔNG VIỆC ═══ -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✏️ Sửa công việc</div>
+    <div class="modal-section">
+      <label class="form-label">TÊN CÔNG VIỆC *</label>
+      <input type="text" class="form-input" id="edit-title" placeholder="Tên công việc">
+    </div>
+    <div class="modal-section">
+      <label class="form-label">MÔ TẢ CHI TIẾT</label>
+      <textarea class="form-input" id="edit-desc" placeholder="Mô tả yêu cầu cụ thể..."></textarea>
+    </div>
+    <div class="modal-section">
+      <label class="form-label">NGÀY THỰC HIỆN *</label>
+      <input type="date" class="form-input" id="edit-date">
+    </div>
+    <div class="modal-section" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label class="form-label">GIỜ BẮT ĐẦU *</label><input type="time" class="form-input" id="edit-start"></div>
+      <div><label class="form-label">GIỜ KẾT THÚC *</label><input type="time" class="form-input" id="edit-end"></div>
+    </div>
+    <div class="modal-section">
+      <label class="form-label">KHU VỰC</label>
+      <input type="text" class="form-input" id="edit-area" placeholder="VD: Bãi biển khu Nam">
+    </div>
+    <div class="modal-section">
+      <label class="form-label">PHÂN CÔNG NHÂN VIÊN *</label>
+      <div class="staff-list" id="edit-assign-list"></div>
+    </div>
+    <div class="modal-section">
+      <label class="form-label">TRẠNG THÁI</label>
+      <div class="select-wrap">
+        <select class="form-select" id="edit-status">
+          <option value="unassigned">❓ Chưa xác định</option>
+          <option value="new">🔴 Chưa bắt đầu</option>
+          <option value="progress">🟡 Đang thực hiện</option>
+          <option value="done">✅ Hoàn thành</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-section">
+      <label class="form-label">THÊM ẢNH HIỆN TRƯỜNG
+        <span id="edit-drive-status" style="display:none"></span>
+      </label>
+      <div class="upload-area" onclick="document.getElementById('edit-photo-input').click()">
+        <div class="up-icon">📷</div>
+        <p>Nhấn để thêm ảnh mới<small>Ảnh mới sẽ bổ sung vào danh sách hiện có</small></p>
+      </div>
+      <input type="file" id="edit-photo-input" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(this,'edit')">
+      <div id="edit-preview-existing" style="margin-top:10px"></div>
+      <div class="upload-preview" id="edit-preview"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeModal('modal-edit')">Hủy</button>
+      <button class="btn-pf" id="btn-save-edit" onclick="saveEditTask()">💾 Lưu thay đổi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: DETAIL MANAGER ═══ -->
+<div class="modal-overlay" id="modal-detail-mgr">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="detail-mgr-content"></div>
+    <button class="btn-secondary" style="width:100%;margin-top:8px" onclick="closeModal('modal-detail-mgr')">Đóng</button>
+  </div>
+</div>
+
+<!-- ═══ MODAL: DETAIL STAFF ═══ -->
+<div class="modal-overlay" id="modal-detail-staff">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="detail-staff-content"></div>
+    <button class="btn-secondary" style="width:100%;margin-top:8px" onclick="closeModal('modal-detail-staff')">Đóng</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay">
+  <div style="font-size:40px">🌴</div>
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Đang tải dữ liệu từ Google Sheet...</div>
+  <div class="loading-sub" id="loading-sub">Vui lòng chờ trong giây lát</div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════
+let SCRIPT_URL = localStorage.getItem('resort_script_url') || '';
+
+// ── SUPER ADMIN (chỉ tài khoản này được quản lý danh sách) ──
+const SUPER_ADMIN = 'Nguyễn Công Hoàng Long';
+
+// ── Danh sách động — lưu vào localStorage ──
+function loadList(key, defaults) {
+  try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : defaults; } catch { return defaults; }
+}
+function saveList(key, arr) { localStorage.setItem(key, JSON.stringify(arr)); }
+
+let MANAGERS   = loadList('resort_managers',   ['Nguyễn Công Hoàng Long', 'Lê Thị Nga']);
+let STAFF_LIST = loadList('resort_staff',      ['Dung', 'Phấn', 'Tiến', 'Hưng', 'Long']);
+
+let currentUser = null, currentRole = 'manager', activeFilter = 'all', selectedPct = null, activeDetailTaskId = null;
+let mgrPending = [], staffPending = [], editPending = [];
+
+let tasks = [
+  { id:1, title:'Dọn dẹp bãi biển khu A',    desc:'Nhặt rác, san phẳng cát, sắp xếp ghế phao.',           area:'Bãi biển phía Nam',    taskDate:'20/03/2026', start:'07:00', end:'09:00', assignees:['Dung','Phấn'],     status:'new',      pct:0,   mgrPhotos:[], staffPhotos:[], assignedAt:'20/03/2026 06:00', completedAt:'' },
+  { id:2, title:'Kiểm tra hệ thống hồ bơi',   desc:'Kiểm tra máy bơm, nồng độ clo, ghi nhật ký.',          area:'Khu hồ bơi trung tâm', taskDate:'20/03/2026', start:'08:00', end:'10:00', assignees:['Tiến'],            status:'progress', pct:70,  mgrPhotos:[], staffPhotos:[], assignedAt:'20/03/2026 07:30', completedAt:'' },
+  { id:3, title:'Trang trí sảnh đón khách',   desc:'Sắp xếp hoa tươi, cân bằng đèn chiếu sáng.',           area:'Sảnh chính tầng 1',    taskDate:'20/03/2026', start:'06:00', end:'08:00', assignees:['Dung','Hưng'],     status:'done',     pct:100, mgrPhotos:[], staffPhotos:[], assignedAt:'20/03/2026 05:30', completedAt:'20/03/2026 07:55' },
+  { id:4, title:'Chuẩn bị buffet sáng',       desc:'Bày biện thức ăn, kiểm tra nhiệt độ, bổ sung liên tục.',area:'Nhà hàng tầng 2',     taskDate:'20/03/2026', start:'06:30', end:'10:00', assignees:['Phấn','Hưng'],     status:'progress', pct:50,  mgrPhotos:[], staffPhotos:[], assignedAt:'20/03/2026 06:00', completedAt:'' },
+];
+let nextId = 5;
+
+// ══════════════════════════════════════════════
+//  DRIVE UPLOAD
+// ══════════════════════════════════════════════
+function fileToDataUrl(f){ return new Promise(r=>{ const rd=new FileReader(); rd.onload=e=>r(e.target.result); rd.readAsDataURL(f); }); }
+
+async function uploadToDrive(file, uploader){
+  if (!SCRIPT_URL) return null;
+  const b64 = (await fileToDataUrl(file)).split(',')[1];
+  try {
+    const res = await fetch(SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'uploadPhoto', fileName:file.name, mimeType:file.type, data:b64, uploader }) });
+    const j = await res.json();
+    return j.url || null;
+  } catch { return null; }
+}
+
+async function handlePhotoSelect(input, who){
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const previewEl  = who==='mgr' ? document.getElementById('mgr-preview') : who==='edit' ? document.getElementById('edit-preview') : document.getElementById('staff-preview');
+  const statusEl   = who==='mgr' ? document.getElementById('mgr-drive-status') : who==='edit' ? document.getElementById('edit-drive-status') : document.getElementById('staff-drive-status');
+  const arr        = who==='mgr' ? mgrPending : who==='edit' ? editPending : staffPending;
+
+  for (const f of files){
+    const dataUrl = await fileToDataUrl(f);
+    const idx = arr.length;
+    arr.push({ dataUrl, file:f, driveUrl:null, status: SCRIPT_URL ? 'uploading' : 'local' });
+    addThumb(previewEl, dataUrl, idx, who);
+  }
+
+  setDriveStatus(statusEl, SCRIPT_URL ? 'uploading' : 'local');
+  if (!SCRIPT_URL) return;
+
+  let ok = true;
+  for (let i=0; i<arr.length; i++){
+    if (arr[i] && arr[i].status==='uploading'){
+      const url = await uploadToDrive(arr[i].file, currentUser);
+      if (url){ arr[i].driveUrl=url; arr[i].status='done'; }
+      else    { arr[i].status='fail'; ok=false; }
+    }
+  }
+  setDriveStatus(statusEl, ok ? 'ok' : 'fail');
+}
+
+function setDriveStatus(el, s){
+  if (!el) return;
+  const map = { uploading:'uploading|⏫ Đang upload lên Google Drive...', ok:'ok|✅ Đã lưu vào Google Drive', local:'local|⚠️ Lưu tạm (chưa có URL Script)', fail:'fail|❌ Upload thất bại — ảnh lưu tạm' };
+  const [cls, txt] = (map[s]||map.local).split('|');
+  el.className='drive-badge '+cls;
+  el.textContent=txt;
+  el.style.display='inline-flex';
+}
+
+function addThumb(container, src, idx, who){
+  const w=document.createElement('div'); w.className='preview-wrap'; w.id=`prv-${who}-${idx}`;
+  w.innerHTML=`<img class="preview-img" src="${src}"><button class="preview-del" onclick="rmThumb('${who}',${idx})">✕</button>`;
+  container.appendChild(w);
+}
+
+function rmThumb(who, idx){
+  const arr=who==='mgr'?mgrPending:staffPending;
+  if (arr[idx]) arr[idx]=null;
+  const el=document.getElementById(`prv-${who}-${idx}`); if(el) el.remove();
+}
+
+function getUrls(arr){ return arr.filter(Boolean).map(p=>p.driveUrl||p.dataUrl); }
+
+// ══════════════════════════════════════════════
+//  LOGIN
+// ══════════════════════════════════════════════
+// ── Mật khẩu quản lý ──────────────────────────
+const MANAGER_PASSWORDS = {
+  'Nguyễn Công Hoàng Long': '8889',
+  'Lê Thị Nga':             '9999'
+};
+
+const STAFF_PASSWORDS = {
+  'Long': '8889'
+};
+
+function onNameChange(){
+  const name = document.getElementById('login-name').value;
+  const pwdGroup = document.getElementById('pwd-group');
+  const pwdInput = document.getElementById('login-pwd');
+  const needsPwd = (currentRole === 'manager' && MANAGER_PASSWORDS[name])
+                || (currentRole === 'staff'   && STAFF_PASSWORDS[name]);
+  if (name && needsPwd) {
+    pwdGroup.style.display = 'block';
+    pwdInput.value = '';
+    setTimeout(()=>pwdInput.focus(), 80);
+  } else {
+    pwdGroup.style.display = 'none';
+  }
+}
+
+function togglePwd(){
+  const input = document.getElementById('login-pwd');
+  const eye   = document.getElementById('pwd-eye');
+  if (input.type === 'password') { input.type = 'text';     eye.textContent = '🙈'; }
+  else                           { input.type = 'password'; eye.textContent = '👁';  }
+}
+
+function setRole(role){
+  currentRole=role;
+  document.querySelectorAll('.role-tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&role==='manager')||(i===1&&role==='staff')));
+  const sel=document.getElementById('login-name');
+  sel.innerHTML='<option value="">-- Chọn tên --</option>';
+  (role==='manager'?MANAGERS:STAFF_LIST).forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); });
+  // Ẩn ô mật khẩu khi đổi vai trò
+  const pwdGroup=document.getElementById('pwd-group');
+  if(pwdGroup){ pwdGroup.style.display='none'; }
+  const pwdInput=document.getElementById('login-pwd');
+  if(pwdInput){ pwdInput.value=''; }
+}
+
+async function doLogin(){
+  const name=document.getElementById('login-name').value;
+  if (!name){ showToast('Vui lòng chọn tên!'); return; }
+
+  // Kiểm tra mật khẩu nếu tài khoản có mật khẩu
+  const pwdMap = currentRole === 'manager' ? MANAGER_PASSWORDS : STAFF_PASSWORDS;
+  if (pwdMap[name]) {
+    const pwd = document.getElementById('login-pwd').value;
+    if (!pwd){ showToast('Vui lòng nhập mật khẩu!'); return; }
+    if (pwd !== pwdMap[name]){
+      showToast('❌ Mật khẩu không đúng!', 'error');
+      document.getElementById('login-pwd').value='';
+      document.getElementById('login-pwd').focus();
+      return;
+    }
+  }
+
+  currentUser=name;
+
+  // Nếu đã có URL Sheet → tải dữ liệu trước khi vào app
+  if (SCRIPT_URL) await loadFromSheet();
+
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  if (currentRole==='manager'){
+    document.getElementById('screen-manager').classList.add('active');
+    document.getElementById('mgr-avatar').textContent=name.split(' ').filter(Boolean).slice(-2).map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('mgr-date').textContent=todayStr();
+    const navAcc = document.getElementById('nav-accounts');
+    if (navAcc) navAcc.style.display = name === SUPER_ADMIN ? 'flex' : 'none';
+    showMgrTab('tasks', document.querySelector('#screen-manager .nav-btn'));
+  } else {
+    document.getElementById('screen-staff').classList.add('active');
+    document.getElementById('staff-name-display').textContent=name.split(' ').slice(-1)[0];
+    document.getElementById('staff-date-display').textContent=todayStr();
+    renderStaffView();
+  }
+}
+
+function logout(){
+  currentUser=null; staffFilter='all';
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-login').classList.add('active');
+  const pwdInput=document.getElementById('login-pwd'); if(pwdInput) pwdInput.value='';
+  const pwdGroup=document.getElementById('pwd-group'); if(pwdGroup) pwdGroup.style.display='none';
+  setRole('manager');
+}
+
+// ══════════════════════════════════════════════
+//  MANAGER TABS
+// ══════════════════════════════════════════════
+function showMgrTab(tab,btn){
+  document.querySelectorAll('#screen-manager .nav-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(tab==='tasks') renderMgrTasks();
+  else if(tab==='calendar') renderCalendarTab();
+  else if(tab==='staff') renderStaffTab();
+  else if(tab==='accounts') renderAccountsTab();
+  else renderSheetTab();
+}
+
+function renderMgrTasks(){
+  const filtered = activeFilter==='all' ? tasks : tasks.filter(t=>t.status===activeFilter);
+  const c = {
+    all:tasks.length,
+    new:tasks.filter(t=>t.status==='new').length,
+    progress:tasks.filter(t=>t.status==='progress').length,
+    done:tasks.filter(t=>t.status==='done').length,
+    unassigned:tasks.filter(t=>t.status==='unassigned').length
+  };
+  const banner = SCRIPT_URL
+    ? `<div class="setup-banner ok"><span class="sb-icon">✅</span><div class="sb-text"><strong>Google Drive đã kết nối.</strong> Ảnh tự lưu vào thư mục "Suối Rao Ecolodge".</div></div>`
+    : `<div class="setup-banner warn"><span class="sb-icon">⚠️</span><div class="sb-text"><strong>Chưa kết nối Google Drive.</strong> Vào tab <strong>Sheet & Drive</strong> để cài đặt.</div></div>`;
+
+  let html = banner + `<div class="stats-grid">
+    <div class="stat-card"><div class="s-label">TỔNG CÔNG VIỆC</div><div class="s-val">${c.all}</div><div class="s-sub">Hôm nay</div></div>
+    <div class="stat-card"><div class="s-label">HOÀN THÀNH</div><div class="s-val green">${c.done}</div><div class="s-sub">${Math.round((c.done/(c.all||1))*100)}%</div></div>
+    <div class="stat-card"><div class="s-label">ĐANG THỰC HIỆN</div><div class="s-val amber">${c.progress}</div></div>
+    <div class="stat-card"><div class="s-label">CHƯA BẮT ĐẦU</div><div class="s-val red">${c.new}</div></div>
+  </div>
+  <div class="section-header"><span class="section-title">Danh sách công việc</span><button class="btn-add" onclick="openCreateModal()">+ Tạo mới</button></div>
+  <div class="filter-row">
+    <div class="filter-chip ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">Tất cả (${c.all})</div>
+    <div class="filter-chip ${activeFilter==='unassigned'?'active':''}" onclick="setFilter('unassigned')" style="${activeFilter==='unassigned'?'':''}">❓ Chưa xác định (${c.unassigned})</div>
+    <div class="filter-chip ${activeFilter==='new'?'active':''}" onclick="setFilter('new')">Chưa bắt đầu (${c.new})</div>
+    <div class="filter-chip ${activeFilter==='progress'?'active':''}" onclick="setFilter('progress')">Đang làm (${c.progress})</div>
+    <div class="filter-chip ${activeFilter==='done'?'active':''}" onclick="setFilter('done')">Hoàn thành (${c.done})</div>
+  </div>`;
+
+  if (!filtered.length) html += `<div class="empty-state"><div class="e-icon">✅</div><p>Không có công việc nào</p></div>`;
+  else filtered.forEach(t=>{ html += taskCardHTML(t,'mgr'); });
+  document.getElementById('mgr-content').innerHTML = html;
+}
+
+function setFilter(f){ activeFilter=f; renderMgrTasks(); }
+
+function taskCardHTML(t, role){
+  const sm={
+    new:['badge-new','Chưa bắt đầu'],
+    progress:['badge-progress','Đang làm'],
+    done:['badge-done','Hoàn thành'],
+    unassigned:['badge-unassigned','❓ Chưa xác định']
+  };
+  const [bc,bl]=sm[t.status]||sm.new;
+  const all=[...t.mgrPhotos,...t.staffPhotos];
+  const thumbs=all.slice(0,3).map(u=>`<div class="thumb"><img src="${u}" onerror="this.parentNode.innerHTML='📷'"></div>`).join('');
+  const sNote=t.staffPhotos.length?`<span>📸 ${t.staffPhotos.length} ảnh xác nhận</span>`:'';
+  const assigneeRow = t.assignees.length
+    ? `<div class="task-assignees">${t.assignees.map(a=>`<span class="assignee-chip">👤 ${a}</span>`).join('')}</div>`
+    : `<div class="task-assignees"><span class="assignee-chip" style="background:#EDE9FE;color:#5B21B6;border:1px dashed #8B5CF6">❓ Chưa phân công</span></div>`;
+  return `<div class="task-card status-${t.status}" onclick="openDetail(${t.id},'${role}')">
+    <div class="task-header"><div class="task-title">${t.title}</div><span class="badge ${bc}">${bl}</span></div>
+    <div class="task-meta">
+      ${t.taskDate?`<span>📅 ${t.taskDate}</span>`:''}
+      <span>🕐 ${t.start}–${t.end}</span>
+      ${t.area?`<span>📍 ${t.area}</span>`:''} ${sNote}
+    </div>
+    ${assigneeRow}
+    ${t.status!=='new'&&t.status!=='unassigned'?`<div class="progress-row"><div class="progress-bar"><div class="progress-fill ${t.pct<100?'amber':''}" style="width:${t.pct}%"></div></div><span class="progress-label">${t.pct}%</span></div>`:''}
+    ${thumbs?`<div class="thumb-strip">${thumbs}${all.length>3?`<span style="font-size:11px;color:var(--gray-400);align-self:center">+${all.length-3}</span>`:''}</div>`:''}
+  </div>`;
+}
+
+function renderStaffTab(){
+  let html=`<div class="section-title" style="margin-bottom:14px">Tổng quan nhân viên hôm nay</div>`;
+  STAFF_LIST.forEach(name=>{
+    const mt=tasks.filter(t=>t.assignees.includes(name));
+    const done=mt.filter(t=>t.status==='done').length;
+    html+=`<div class="sheet-card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div style="width:42px;height:42px;border-radius:50%;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--teal-dark)">${name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+        <div><div style="font-weight:600;font-size:14px">${name}</div><div style="font-size:12px;color:var(--gray-400)">${mt.length} công việc hôm nay</div></div>
+        <div style="margin-left:auto;font-size:18px;font-weight:700;color:var(--teal)">${done}/${mt.length}</div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${mt.length?Math.round(done/mt.length*100):0}%"></div></div>
+    </div>`;
+  });
+  document.getElementById('mgr-content').innerHTML=html;
+}
+
+// ══════════════════════════════════════════════
+//  CALENDAR TAB
+// ══════════════════════════════════════════════
+let calView='month'; // 'day' | 'week' | 'month' | 'year'
+let calOffset=0;     // offset from current period
+let calChartInstance=null;
+
+// Parse dd/MM/yyyy HH:mm → Date (returns null if invalid)
+function parseTaskDate(str){
+  if (!str) return null;
+  const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (!m) return null;
+  return new Date(+m[3], +m[2]-1, +m[1]);
+}
+
+// Format Date → key string dd/MM/yyyy
+function dateKey(d){ return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
+
+// Build a map: dateKey → { done:[], progress:[], new:[] }
+function buildTaskMap(){
+  const map={};
+  tasks.forEach(t=>{
+    // Ưu tiên taskDate (ngày thực hiện), fallback sang assignedAt, rồi completedAt
+    const d = parseTaskDate(t.taskDate) || parseTaskDate(t.assignedAt) || parseTaskDate(t.completedAt);
+    if (!d) return;
+    const k = dateKey(d);
+    if (!map[k]) map[k]={ done:[], progress:[], new:[], unassigned:[] };
+    const s = t.status in map[k] ? t.status : 'new';
+    map[k][s].push(t);
+  });
+  return map;
+}
+
+function renderCalendarTab(){
+  document.getElementById('mgr-content').innerHTML=`
+    <div class="cal-view-tabs">
+      <div class="cal-view-tab ${calView==='day'?'active':''}" onclick="setCalView('day')">Ngày</div>
+      <div class="cal-view-tab ${calView==='week'?'active':''}" onclick="setCalView('week')">Tuần</div>
+      <div class="cal-view-tab ${calView==='month'?'active':''}" onclick="setCalView('month')">Tháng</div>
+      <div class="cal-view-tab ${calView==='year'?'active':''}" onclick="setCalView('year')">Năm</div>
+    </div>
+    <div id="cal-body"></div>`;
+  renderCalBody();
+}
+
+function setCalView(v){ calView=v; calOffset=0; renderCalendarTab(); }
+
+function calNav(dir){ calOffset+=dir; renderCalBody(); }
+
+function renderCalBody(){
+  const now = new Date();
+  if (calView==='day')   renderDayView(now);
+  else if (calView==='week') renderWeekView(now);
+  else if (calView==='year') renderYearView(now);
+  else renderMonthView(now);
+}
+
+// ── DAY VIEW ──────────────────────────────────
+function renderDayView(now){
+  const d = new Date(now); d.setDate(d.getDate()+calOffset);
+  const key = dateKey(d);
+  const map = buildTaskMap();
+  const dayTasks = map[key] ? [...(map[key].done||[]),...(map[key].progress||[]),...(map[key].new||[])] : [];
+  const done=dayTasks.filter(t=>t.status==='done').length;
+  const vn = ['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+
+  let html = `
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
+      <div class="cal-period">${vn[d.getDay()]}, ${key}</div>
+      <button class="cal-nav-btn" onclick="calNav(1)">›</button>
+    </div>
+    <div class="summary-row">
+      <div class="sum-card"><div class="sn">${dayTasks.length}</div><div class="sl">Tổng việc</div></div>
+      <div class="sum-card"><div class="sn" style="color:var(--teal)">${done}</div><div class="sl">Hoàn thành</div></div>
+      <div class="sum-card"><div class="sn" style="color:var(--amber)">${dayTasks.filter(t=>t.status==='progress').length}</div><div class="sl">Đang làm</div></div>
+      <div class="sum-card"><div class="sn" style="color:var(--red)">${dayTasks.filter(t=>t.status==='new').length}</div><div class="sl">Chưa làm</div></div>
+    </div>
+    <div class="chart-card">
+      <h3>TIẾN ĐỘ TRONG NGÀY</h3>
+      <div class="chart-wrap"><canvas id="cal-chart"></canvas></div>
+    </div>`;
+
+  if (!dayTasks.length) {
+    html += `<div class="empty-state"><div class="e-icon">📅</div><p>Không có công việc nào trong ngày này</p></div>`;
+  } else {
+    const sm={new:['badge-new','Chưa bắt đầu'],progress:['badge-progress','Đang làm'],done:['badge-done','Hoàn thành']};
+    dayTasks.forEach(t=>{
+      const [bc,bl]=sm[t.status];
+      html+=`<div class="day-detail-card" style="border-left-color:${t.status==='done'?'var(--teal)':t.status==='progress'?'var(--amber)':'var(--red)'}">
+        <div class="day-detail-title">${t.title}</div>
+        <div class="day-detail-meta">
+          <span>🕐 ${t.start}–${t.end}</span>
+          ${t.area?`<span>📍 ${t.area}</span>`:''}
+          <span class="badge ${bc}" style="font-size:10px">${bl}</span>
+        </div>
+        ${t.completedAt?`<div style="font-size:11px;color:var(--teal);margin-top:4px">✅ Hoàn thành lúc ${t.completedAt}</div>`:''}
+      </div>`;
+    });
+  }
+
+  document.getElementById('cal-body').innerHTML = html;
+  // Draw doughnut
+  setTimeout(()=>{
+    const ctx = document.getElementById('cal-chart');
+    if (!ctx) return;
+    if (calChartInstance) calChartInstance.destroy();
+    calChartInstance = new Chart(ctx, {
+      type:'doughnut',
+      data:{ labels:['Hoàn thành','Đang làm','Chưa bắt đầu'],
+             datasets:[{data:[done, dayTasks.filter(t=>t.status==='progress').length, dayTasks.filter(t=>t.status==='new').length],
+               backgroundColor:['#0D9373','#D97706','#DC2626'], borderWidth:0, hoverOffset:4}]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{font:{size:12},boxWidth:12} } },
+        cutout:'65%' }
+    });
+  }, 60);
+}
+
+// ── WEEK VIEW ─────────────────────────────────
+function renderWeekView(now){
+  const base = new Date(now);
+  const dow = base.getDay();
+  base.setDate(base.getDate() - dow + calOffset*7); // start of week (Sun)
+  const days=[]; for(let i=0;i<7;i++){ const d=new Date(base); d.setDate(base.getDate()+i); days.push(d); }
+  const map = buildTaskMap();
+  const labels=[], doneCnt=[], totalCnt=[];
+  const vn7=['CN','T2','T3','T4','T5','T6','T7'];
+  days.forEach((d,i)=>{
+    const k=dateKey(d);
+    const dt=map[k]||{done:[],progress:[],new:[]};
+    labels.push(vn7[i]+'\n'+d.getDate()+'/'+( d.getMonth()+1));
+    doneCnt.push((dt.done||[]).length);
+    totalCnt.push((dt.done||[]).length+(dt.progress||[]).length+(dt.new||[]).length);
+  });
+  const weekLabel=`${dateKey(days[0])} – ${dateKey(days[6])}`;
+  const totalDone=doneCnt.reduce((a,b)=>a+b,0);
+  const totalAll=totalCnt.reduce((a,b)=>a+b,0);
+
+  let html=`
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
+      <div class="cal-period">Tuần: ${weekLabel}</div>
+      <button class="cal-nav-btn" onclick="calNav(1)">›</button>
+    </div>
+    <div class="summary-row">
+      <div class="sum-card"><div class="sn">${totalAll}</div><div class="sl">Tổng việc</div></div>
+      <div class="sum-card"><div class="sn" style="color:var(--teal)">${totalDone}</div><div class="sl">Hoàn thành</div></div>
+      <div class="sum-card"><div class="sn" style="color:var(--teal)">${totalAll?Math.round(totalDone/totalAll*100):0}%</div><div class="sl">Tỉ lệ</div></div>
+    </div>
+    <div class="chart-card">
+      <h3>HOÀN THÀNH THEO NGÀY TRONG TUẦN</h3>
+      <div class="chart-wrap"><canvas id="cal-chart"></canvas></div>
+    </div>
+    <div class="section-title" style="margin-bottom:10px">Chi tiết từng ngày</div>`;
+
+  days.forEach(d=>{
+    const k=dateKey(d);
+    const dt=map[k]; if(!dt) return;
+    const all=[...(dt.done||[]),...(dt.progress||[]),...(dt.new||[])];
+    if (!all.length) return;
+    const vn=['CN','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
+    html+=`<div style="margin-bottom:4px;font-size:12px;font-weight:600;color:var(--gray-500);padding-left:2px">${vn[d.getDay()]} – ${k}</div>`;
+    all.forEach(t=>{
+      const col=t.status==='done'?'var(--teal)':t.status==='progress'?'var(--amber)':'var(--red)';
+      html+=`<div class="day-detail-card" style="border-left-color:${col};margin-bottom:6px">
+        <div class="day-detail-title">${t.title}</div>
+        <div class="day-detail-meta"><span>🕐 ${t.start}–${t.end}</span>${t.area?`<span>📍 ${t.area}</span>`:''}</div>
+        ${t.completedAt?`<div style="font-size:11px;color:var(--teal);margin-top:3px">✅ ${t.completedAt}</div>`:''}
+      </div>`;
+    });
+  });
+
+  document.getElementById('cal-body').innerHTML=html;
+  setTimeout(()=>{
+    const ctx=document.getElementById('cal-chart'); if(!ctx) return;
+    if(calChartInstance) calChartInstance.destroy();
+    calChartInstance=new Chart(ctx,{
+      type:'bar',
+      data:{ labels, datasets:[
+        {label:'Hoàn thành', data:doneCnt, backgroundColor:'#0D9373', borderRadius:6, borderSkipped:false},
+        {label:'Tổng việc',  data:totalCnt.map((t,i)=>t-doneCnt[i]), backgroundColor:'#E5E7EB', borderRadius:6, borderSkipped:false}
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{ x:{stacked:true, grid:{display:false}, ticks:{font:{size:10}}},
+                 y:{stacked:true, beginAtZero:true, ticks:{stepSize:1,font:{size:10}}, grid:{color:'#F3F4F6'}} } }
+    });
+  }, 60);
+}
+
+// ── MONTH VIEW ────────────────────────────────
+function renderMonthView(now){
+  const base = new Date(now.getFullYear(), now.getMonth()+calOffset, 1);
+  const year=base.getFullYear(), month=base.getMonth();
+  const map=buildTaskMap();
+
+  // Build 7×6 grid
+  const firstDow=base.getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const cells=[]; let d=1-firstDow;
+  for(let r=0;r<6;r++){ for(let c=0;c<7;c++,d++) cells.push(new Date(year,month,d)); }
+
+  // Monthly stats
+  let mDone=0,mTotal=0;
+  const monthLabels=[],monthDone=[];
+  for(let dd=1;dd<=daysInMonth;dd++){
+    const k=dateKey(new Date(year,month,dd));
+    const dt=map[k]||{done:[],progress:[],new:[]};
+    const cnt=(dt.done||[]).length+(dt.progress||[]).length+(dt.new||[]).length;
+    const dc=(dt.done||[]).length;
+    mTotal+=cnt; mDone+=dc;
+    monthLabels.push(dd);
+    monthDone.push(dc);
+  }
+
+  const vnMonth=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+  const dayNames=['CN','T2','T3','T4','T5','T6','T7'];
+  const todayKey=dateKey(new Date());
+
+  let calGrid='<div class="cal-grid">';
+  dayNames.forEach(n=>{ calGrid+=`<div class="cal-day-label">${n}</div>`; });
+  cells.forEach(cd=>{
+    const k=dateKey(cd); const isThis=cd.getMonth()===month;
+    const dt=map[k]||{done:[],progress:[],new:[]};
+    const doneCnt=(dt.done||[]).length, progCnt=(dt.progress||[]).length, newCnt=(dt.new||[]).length;
+    const total=doneCnt+progCnt+newCnt;
+    const cls=['cal-day', k===todayKey?'today':'', doneCnt>0?'has-done':'', !isThis?'other-month':''].filter(Boolean).join(' ');
+    const dots=[...Array(Math.min(doneCnt,3)).fill('<div class="cal-dot done"></div>'),
+                ...Array(Math.min(progCnt,2)).fill('<div class="cal-dot progress"></div>'),
+                ...Array(Math.min(newCnt,2)).fill('<div class="cal-dot new"></div>')].join('');
+    calGrid+=`<div class="${cls}" onclick="calDayClick('${k}')">
+      <div class="cal-day-num">${cd.getDate()}</div>
+      ${total>0?`<div class="cal-dots-row">${dots}</div><div class="cal-day-total">${total}</div>`:''}
+    </div>`;
+  });
+  calGrid+='</div>';
+
+  let html=`
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
+      <div class="cal-period">${vnMonth[month]} ${year}</div>
+      <button class="cal-nav-btn" onclick="calNav(1)">›</button>
+    </div>
+    <div class="summary-row">
+      <div class="sum-card"><div class="sn">${mTotal}</div><div class="sl">Tổng việc</div></div>
+      <div class="sum-card"><div class="sn" style="color:var(--teal)">${mDone}</div><div class="sl">Hoàn thành</div></div>
+      <div class="sum-card"><div class="sn" style="color:var(--teal)">${mTotal?Math.round(mDone/mTotal*100):0}%</div><div class="sl">Tỉ lệ</div></div>
+    </div>
+    <div class="chart-card">
+      <h3>HOÀN THÀNH THEO NGÀY TRONG THÁNG</h3>
+      <div class="chart-wrap"><canvas id="cal-chart"></canvas></div>
+    </div>
+    ${calGrid}
+    <div style="display:flex;gap:12px;font-size:11px;color:var(--gray-500);margin-bottom:14px;padding-left:2px">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-right:4px"></span>Hoàn thành</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-right:4px"></span>Đang làm</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:4px"></span>Chưa bắt đầu</span>
+    </div>
+    <div id="cal-day-detail"></div>`;
+
+  document.getElementById('cal-body').innerHTML=html;
+  setTimeout(()=>{
+    const ctx=document.getElementById('cal-chart'); if(!ctx) return;
+    if(calChartInstance) calChartInstance.destroy();
+    calChartInstance=new Chart(ctx,{
+      type:'bar',
+      data:{ labels:monthLabels,
+             datasets:[{label:'Hoàn thành',data:monthDone,backgroundColor:'#0D9373',borderRadius:4,borderSkipped:false}]},
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{ x:{grid:{display:false},ticks:{font:{size:9},maxRotation:0}},
+                 y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}},grid:{color:'#F3F4F6'}} } }
+    });
+  }, 60);
+}
+
+// ── YEAR VIEW ─────────────────────────────────
+function renderYearView(now){
+  const year = now.getFullYear() + calOffset;
+  const map  = buildTaskMap();
+  const vnMonth=['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
+  const vnMonthFull=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+
+  // Tính tổng theo tháng
+  const yDone=[], yTotal=[], yPct=[];
+  let grandDone=0, grandTotal=0, bestMonth=-1, bestVal=-1;
+  for(let m=0;m<12;m++){
+    const days=new Date(year,m+1,0).getDate();
+    let md=0,mt=0;
+    for(let dd=1;dd<=days;dd++){
+      const k=dateKey(new Date(year,m,dd));
+      const dt=map[k]||{done:[],progress:[],new:[]};
+      md+=(dt.done||[]).length;
+      mt+=(dt.done||[]).length+(dt.progress||[]).length+(dt.new||[]).length;
+    }
+    yDone.push(md); yTotal.push(mt);
+    yPct.push(mt>0?Math.round(md/mt*100):0);
+    grandDone+=md; grandTotal+=mt;
+    if(md>bestVal){ bestVal=md; bestMonth=m; }
+  }
+
+  // Mini lịch 12 tháng
+  let miniGrid='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">';
+  for(let m=0;m<12;m++){
+    const isCurrentMonth=(m===new Date().getMonth()&&year===new Date().getFullYear());
+    const total=yTotal[m], done=yDone[m];
+    const pct=yPct[m];
+    // heat color based on done count
+    const heat=done===0?'var(--gray-100)':done<=1?'#DCFCE7':done<=3?'#86EFAC':'#16A34A';
+    const textCol=done>3?'white':'var(--gray-700)';
+    miniGrid+=`<div onclick="jumpToMonth(${m},${year})" style="background:${isCurrentMonth?'var(--teal-light)':heat};border:${isCurrentMonth?'2px solid var(--teal)':'1.5px solid var(--gray-200)'};border-radius:10px;padding:10px 8px;cursor:pointer;transition:all .15s;text-align:center">
+      <div style="font-size:12px;font-weight:700;color:${isCurrentMonth?'var(--teal-dark)':textCol}">${vnMonth[m]}</div>
+      <div style="font-size:18px;font-weight:700;color:${isCurrentMonth?'var(--teal)':done>3?'white':'var(--gray-900)'};margin:4px 0">${done}</div>
+      <div style="font-size:10px;color:${isCurrentMonth?'var(--teal-dark)':textCol};opacity:.8">${total} việc · ${pct}%</div>
+    </div>`;
+  }
+  miniGrid+='</div>';
+
+  // Bảng top tháng
+  const ranked=[...Array(12).keys()].sort((a,b)=>yDone[b]-yDone[a]);
+  let topRows='';
+  ranked.slice(0,5).forEach((m,i)=>{
+    if(yTotal[m]===0) return;
+    const bar=yTotal[m]>0?Math.round(yDone[m]/Math.max(...yDone)*100):0;
+    topRows+=`<tr>
+      <td style="padding:8px 10px;font-size:12px;color:var(--gray-500);font-weight:600">${i+1}</td>
+      <td style="padding:8px 10px;font-size:13px;font-weight:600">${vnMonthFull[m]}</td>
+      <td style="padding:8px 10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:5px;background:var(--gray-200);border-radius:4px;overflow:hidden">
+            <div style="width:${bar}%;height:100%;background:var(--teal);border-radius:4px"></div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:var(--teal);min-width:20px">${yDone[m]}</span>
+        </div>
+      </td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--gray-400)">${yPct[m]}%</td>
+    </tr>`;
+  });
+
+  let html=`
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
+      <div class="cal-period">Năm ${year}</div>
+      <button class="cal-nav-btn" onclick="calNav(1)">›</button>
+    </div>
+    <div class="summary-row">
+      <div class="sum-card"><div class="sn">${grandTotal}</div><div class="sl">Tổng việc</div></div>
+      <div class="sum-card"><div class="sn" style="color:var(--teal)">${grandDone}</div><div class="sl">Hoàn thành</div></div>
+      <div class="sum-card"><div class="sn" style="color:var(--teal)">${grandTotal?Math.round(grandDone/grandTotal*100):0}%</div><div class="sl">Tỉ lệ</div></div>
+      <div class="sum-card"><div class="sn" style="color:var(--amber);font-size:14px">${bestMonth>=0&&bestVal>0?vnMonth[bestMonth]:'—'}</div><div class="sl">Tháng cao nhất</div></div>
+    </div>
+
+    <div class="chart-card">
+      <h3>HOÀN THÀNH THEO THÁNG — NĂM ${year}</h3>
+      <div class="chart-wrap" style="height:220px"><canvas id="cal-chart"></canvas></div>
+    </div>
+
+    <div class="section-title" style="margin-bottom:10px">Tổng quan 12 tháng <span style="font-size:11px;font-weight:400;color:var(--gray-400)">(nhấn để xem chi tiết tháng)</span></div>
+    ${miniGrid}
+
+    ${topRows?`<div class="chart-card">
+      <h3>TOP THÁNG HOÀN THÀNH NHIỀU NHẤT</h3>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr>
+          <th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--gray-400);border-bottom:1px solid var(--gray-200)">#</th>
+          <th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--gray-400);border-bottom:1px solid var(--gray-200)">Tháng</th>
+          <th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--gray-400);border-bottom:1px solid var(--gray-200)">Hoàn thành</th>
+          <th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--gray-400);border-bottom:1px solid var(--gray-200)">Tỉ lệ</th>
+        </tr></thead>
+        <tbody>${topRows}</tbody>
+      </table>
+    </div>`:''}`;
+
+  document.getElementById('cal-body').innerHTML=html;
+  setTimeout(()=>{
+    const ctx=document.getElementById('cal-chart'); if(!ctx) return;
+    if(calChartInstance) calChartInstance.destroy();
+    calChartInstance=new Chart(ctx,{
+      type:'bar',
+      data:{
+        labels: vnMonth,
+        datasets:[
+          { label:'Hoàn thành', data:yDone, backgroundColor:'#0D9373', borderRadius:5, borderSkipped:false, order:1 },
+          { label:'Chưa xong',  data:yTotal.map((t,i)=>t-yDone[i]), backgroundColor:'#E5E7EB', borderRadius:5, borderSkipped:false, order:1 },
+          { label:'Tỉ lệ %',   data:yPct, type:'line', borderColor:'#D97706', backgroundColor:'transparent',
+            pointBackgroundColor:'#D97706', pointRadius:3, tension:.35, yAxisID:'pct', order:0 }
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ position:'bottom', labels:{font:{size:11},boxWidth:10,padding:12} } },
+        scales:{
+          x:{ stacked:true, grid:{display:false}, ticks:{font:{size:11}} },
+          y:{ stacked:true, beginAtZero:true, ticks:{stepSize:1,font:{size:10}}, grid:{color:'#F3F4F6'} },
+          pct:{ position:'right', beginAtZero:true, max:100, ticks:{callback:v=>v+'%',font:{size:10}}, grid:{display:false} }
+        }
+      }
+    });
+  }, 60);
+}
+
+// Nhảy từ year view sang month view của tháng được chọn
+function jumpToMonth(month, year){
+  const now=new Date();
+  const diff=(year-now.getFullYear())*12+(month-now.getMonth());
+  calView='month'; calOffset=diff;
+  renderCalendarTab();
+}
+
+function calDayClick(key){
+  const map=buildTaskMap();
+  const dt=map[key]; 
+  const el=document.getElementById('cal-day-detail');
+  if (!el) return;
+  if (!dt){ el.innerHTML=`<div class="empty-state" style="padding:20px"><div class="e-icon">📅</div><p>Không có công việc ngày ${key}</p></div>`; return; }
+  const all=[...(dt.done||[]),...(dt.progress||[]),...(dt.new||[])];
+  let html=`<div class="section-title" style="margin-bottom:10px">📅 Công việc ngày ${key}</div>`;
+  all.forEach(t=>{
+    const col=t.status==='done'?'var(--teal)':t.status==='progress'?'var(--amber)':'var(--red)';
+    const sm={new:'Chưa bắt đầu',progress:'Đang làm',done:'Hoàn thành'};
+    html+=`<div class="day-detail-card" style="border-left-color:${col}">
+      <div class="day-detail-title">${t.title}</div>
+      <div class="day-detail-meta">
+        <span>🕐 ${t.start}–${t.end}</span>
+        ${t.area?`<span>📍 ${t.area}</span>`:''}
+        <span>${sm[t.status]}</span>
+      </div>
+      <div style="font-size:11px;color:var(--gray-400);margin-top:4px">👤 ${t.assignees.join(', ')}</div>
+      ${t.assignedAt?`<div style="font-size:11px;color:var(--gray-500);margin-top:2px">📅 Giao: ${t.assignedAt}</div>`:''}
+      ${t.completedAt?`<div style="font-size:11px;color:var(--teal);margin-top:2px">✅ Xong: ${t.completedAt}</div>`:''}
+    </div>`;
+  });
+  el.innerHTML=html;
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ══════════════════════════════════════════════
+//  ACCOUNTS TAB (chỉ SUPER ADMIN)
+// ══════════════════════════════════════════════
+function renderAccountsTab(){
+  if (currentUser !== SUPER_ADMIN) { renderMgrTasks(); return; }
+
+  function personCard(name, type, idx) {
+    const isSuper = name === SUPER_ADMIN;
+    const bg   = type==='manager' ? 'var(--teal-light)' : 'var(--gray-100)';
+    const col  = type==='manager' ? 'var(--teal-dark)' : 'var(--gray-700)';
+    const role = type==='manager' ? '👔 Quản lý' : '👷 Nhân viên';
+    const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const delBtn = isSuper ? '' : `<button onclick="deletePerson('${type}',${idx})" style="width:32px;height:32px;border-radius:50%;background:var(--red-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0" title="Xóa">🗑</button>`;
+    const superBadge = isSuper ? `<span style="font-size:10px;background:linear-gradient(90deg,var(--teal),var(--teal-dark));color:white;padding:2px 8px;border-radius:100px;font-weight:600;margin-left:6px">SUPER ADMIN</span>` : '';
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-100)">
+      <div style="width:42px;height:42px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:${col};flex-shrink:0">${initials}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:14px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">${name}${superBadge}</div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:2px">${role}</div>
+      </div>
+      ${delBtn}
+    </div>`;
+  }
+
+  const mgrCards  = MANAGERS.map((n,i)  => personCard(n,'manager',i)).join('');
+  const staffCards = STAFF_LIST.map((n,i) => personCard(n,'staff',i)).join('');
+
+  document.getElementById('mgr-content').innerHTML = `
+    <div style="background:linear-gradient(135deg,var(--teal),var(--teal-dark));border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;color:white">
+      <div style="font-size:13px;opacity:.8;margin-bottom:2px">Đăng nhập với tư cách</div>
+      <div style="font-size:17px;font-weight:700">${SUPER_ADMIN}</div>
+      <div style="font-size:11px;opacity:.7;margin-top:4px">🔐 Quản trị viên cấp cao — toàn quyền quản lý tài khoản</div>
+    </div>
+
+    <div class="sheet-card" style="margin-bottom:12px">
+      <h3 style="font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
+        👔 Danh sách quản lý
+        <span style="font-size:12px;background:var(--teal-light);color:var(--teal-dark);padding:3px 10px;border-radius:100px;font-weight:600">${MANAGERS.length} người</span>
+      </h3>
+      <p style="font-size:12px;color:var(--gray-400);margin-bottom:12px">Quản lý có thể tạo/giao công việc và theo dõi toàn bộ nhân viên</p>
+      <div id="mgr-list">${mgrCards}</div>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <input type="text" id="new-mgr-input" class="form-input" style="font-size:13px;padding:10px 12px" placeholder="Nhập tên quản lý mới...">
+        <button onclick="addPerson('manager')" style="padding:10px 16px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">+ Thêm</button>
+      </div>
+    </div>
+
+    <div class="sheet-card">
+      <h3 style="font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
+        👷 Danh sách nhân viên
+        <span style="font-size:12px;background:var(--gray-100);color:var(--gray-700);padding:3px 10px;border-radius:100px;font-weight:600">${STAFF_LIST.length} người</span>
+      </h3>
+      <p style="font-size:12px;color:var(--gray-400);margin-bottom:12px">Nhân viên nhận và thực hiện công việc được giao</p>
+      <div id="staff-list-acct">${staffCards}</div>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <input type="text" id="new-staff-input" class="form-input" style="font-size:13px;padding:10px 12px" placeholder="Nhập tên nhân viên mới...">
+        <button onclick="addPerson('staff')" style="padding:10px 16px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">+ Thêm</button>
+      </div>
+    </div>
+
+    <div style="background:var(--amber-light);border-radius:var(--radius-sm);padding:12px 14px;display:flex;gap:10px;margin-top:4px">
+      <span style="font-size:17px;flex-shrink:0">⚠️</span>
+      <div style="font-size:12px;color:#92400E;line-height:1.6">
+        <strong style="color:#78350F">Lưu ý:</strong> Xóa tài khoản không ảnh hưởng đến công việc đã tạo. Tên đã được phân công trong công việc vẫn được giữ nguyên.
+      </div>
+    </div>`;
+}
+
+function addPerson(type) {
+  const inputId = type==='manager' ? 'new-mgr-input' : 'new-staff-input';
+  const name = document.getElementById(inputId).value.trim();
+  if (!name) { showToast('Vui lòng nhập tên!'); return; }
+  if (type==='manager') {
+    if (MANAGERS.includes(name)) { showToast('Tên này đã tồn tại!','error'); return; }
+    MANAGERS.push(name); saveList('resort_managers', MANAGERS);
+  } else {
+    if (STAFF_LIST.includes(name)) { showToast('Tên này đã tồn tại!','error'); return; }
+    STAFF_LIST.push(name); saveList('resort_staff', STAFF_LIST);
+  }
+  document.getElementById(inputId).value = '';
+  showToast(`✅ Đã thêm ${type==='manager'?'quản lý':'nhân viên'}: ${name}`, 'success');
+  renderAccountsTab();
+}
+
+function deletePerson(type, idx) {
+  if (type==='manager') {
+    const name = MANAGERS[idx];
+    if (name === SUPER_ADMIN) { showToast('Không thể xóa Super Admin!','error'); return; }
+    if (!confirm(`Xóa quản lý "${name}"?`)) return;
+    MANAGERS.splice(idx,1); saveList('resort_managers', MANAGERS);
+    showToast(`🗑 Đã xóa quản lý: ${name}`);
+  } else {
+    const name = STAFF_LIST[idx];
+    if (!confirm(`Xóa nhân viên "${name}"?`)) return;
+    STAFF_LIST.splice(idx,1); saveList('resort_staff', STAFF_LIST);
+    showToast(`🗑 Đã xóa nhân viên: ${name}`);
+  }
+  renderAccountsTab();
+}
+
+function renderSheetTab(){
+  const rows=tasks.map(t=>{
+    const sc=t.status==='done'?'background:#dcfce7;color:#166534':t.status==='progress'?'background:#fef9c3;color:#854d0e':t.status==='unassigned'?'background:#EDE9FE;color:#5B21B6':'background:#fee2e2;color:#991b1b';
+    const all=[...t.mgrPhotos,...t.staffPhotos];
+    const pCell=all.length ? all.map((u,i)=>`<a href="${u}" target="_blank" style="color:var(--blue);font-size:11px;display:inline-block">Ảnh ${i+1}</a>`).join(' · ') : `<span style="color:var(--gray-400);font-size:11px">Chưa có</span>`;
+    const sl=t.status==='done'?'✅ Hoàn thành':t.status==='progress'?`🟡 ${t.pct}%`:t.status==='unassigned'?'❓ Chưa xác định':'🔴 Chưa bắt đầu';
+    return `<tr>
+      <td>${t.id}</td>
+      <td style="font-weight:500">${t.title}</td>
+      <td>${t.assignees.join(', ')}</td>
+      <td>${t.start}–${t.end}</td>
+      <td><span class="sheet-badge" style="${sc}">${sl}</span></td>
+      <td style="color:var(--teal-dark);font-size:11px">${t.assignedAt||'—'}</td>
+      <td style="color:var(--teal);font-size:11px">${t.completedAt||'—'}</td>
+      <td>${pCell}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('mgr-content').innerHTML=`
+  <div class="sheet-card">
+    <h3>🔗 Kết nối Google Drive & Sheet</h3>
+    <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px;line-height:1.6">Nhập URL Apps Script sau khi deploy. Tất cả ảnh sẽ lưu vào Drive, dữ liệu tự ghi vào Sheet.</p>
+    <label class="form-label">URL APPS SCRIPT (DEPLOYMENT URL)</label>
+    <div class="url-row">
+      <input type="url" id="url-input" placeholder="https://script.google.com/macros/s/.../exec" value="${SCRIPT_URL}">
+      <button onclick="saveUrl()">Lưu</button>
+    </div>
+    <div style="margin-top:8px">${SCRIPT_URL?'<span class="drive-badge ok">✅ Đã kết nối</span>':'<span class="drive-badge fail">⚠️ Chưa cấu hình</span>'}</div>
+  </div>
+
+  <div class="step-guide">
+    <h3>📋 Hướng dẫn setup (5 phút)</h3>
+    <div class="step-item"><div class="step-num">1</div><div class="step-text">Tạo Google Sheet mới tại <strong>sheets.google.com</strong></div></div>
+    <div class="step-item"><div class="step-num">2</div><div class="step-text">Vào <strong>Extensions → Apps Script</strong>, xóa code cũ, dán toàn bộ script bên dưới vào</div></div>
+    <div class="step-item"><div class="step-num">3</div><div class="step-text">Nhấn <strong>Deploy → New deployment → Web app</strong>. Mục <em>Who has access</em> chọn <strong>Anyone</strong></div></div>
+    <div class="step-item"><div class="step-num">4</div><div class="step-text">Copy URL dạng <code>https://script.google.com/macros/s/ABC.../exec</code>, dán vào ô trên rồi nhấn Lưu</div></div>
+    <div class="step-item"><div class="step-num">5</div><div class="step-text">Xong! Từ giờ ảnh upload → tự vào Drive thư mục <strong>"Suối Rao Ecolodge"</strong>, dữ liệu → tự ghi Sheet</div></div>
+  </div>
+
+  <div class="sheet-card">
+    <h3>📊 Dữ liệu sẽ ghi vào Google Sheet</h3>
+    <div style="overflow-x:auto"><table class="sheet-table">
+      <thead><tr><th>ID</th><th>Công việc</th><th>Nhân viên</th><th>Giờ thực hiện</th><th>Trạng thái</th><th>Giờ giao việc</th><th>Giờ hoàn thành</th><th>Ảnh Drive</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <button class="btn-sheet" onclick="syncAll()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+      Đồng bộ tất cả → Google Sheet
+    </button>
+    <button onclick="reloadFromSheet()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;background:var(--teal-light);color:var(--teal-dark);border:1.5px solid var(--teal);border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px">
+      ⬇️ Tải lại dữ liệu từ Sheet
+    </button>
+  </div>
+
+  <div class="sheet-card">
+    <h3>⚙️ Google Apps Script — Sao chép và dán vào Apps Script</h3>
+    <div class="script-box">${escHtml(buildScript())}</div>
+    <button onclick="copyScript()" style="width:100%;padding:11px;background:var(--gray-100);border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;color:var(--gray-700)">📋 Sao chép toàn bộ Script</button>
+  </div>`;
+}
+
+function saveUrl(){
+  const v=document.getElementById('url-input').value.trim();
+  if(v && !v.startsWith('https://script.google.com')){ showToast('URL không hợp lệ!','error'); return; }
+  SCRIPT_URL=v; localStorage.setItem('resort_script_url',v);
+  showToast(v?'✅ Đã lưu URL Apps Script!':'Đã xóa URL', v?'success':'');
+  renderSheetTab();
+}
+
+// ══════════════════════════════════════════════
+//  CREATE TASK
+// ══════════════════════════════════════════════
+function openCreateModal(){
+  mgrPending=[];
+  ['mgr-preview','new-title','new-desc','new-area'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value!==undefined?el.value='':el.innerHTML=''; });
+  // Default: hôm nay
+  const today=new Date(); const yy=today.getFullYear(), mm=String(today.getMonth()+1).padStart(2,'0'), dd=String(today.getDate()).padStart(2,'0');
+  document.getElementById('new-date').value=`${yy}-${mm}-${dd}`;
+  document.getElementById('new-start').value='07:00';
+  document.getElementById('new-end').value='09:00';
+  const ds=document.getElementById('mgr-drive-status'); if(ds){ ds.className=''; ds.textContent=''; }
+  document.getElementById('assign-list').innerHTML=STAFF_LIST.map(n=>`<div class="staff-chip" onclick="this.classList.toggle('selected')">${n}</div>`).join('');
+  document.getElementById('modal-create').classList.add('open');
+}
+
+async function createTask(){
+  const title=document.getElementById('new-title').value.trim();
+  const dateVal=document.getElementById('new-date').value;
+  const start=document.getElementById('new-start').value;
+  const end=document.getElementById('new-end').value;
+  const selected=[...document.querySelectorAll('#assign-list .staff-chip.selected')].map(el=>el.textContent);
+  if (!title){ showToast('Vui lòng nhập tên công việc!'); return; }
+  if (!dateVal){ showToast('Vui lòng chọn ngày thực hiện!'); return; }
+  if (!start||!end){ showToast('Vui lòng chọn giờ thực hiện!'); return; }
+  if (mgrPending.some(p=>p&&p.status==='uploading')){ showToast('⏳ Đang tải ảnh lên Drive, chờ xíu...'); return; }
+
+  const btn=document.getElementById('btn-create-task');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Đang tạo...';
+
+  // Format ngày hiển thị dd/MM/yyyy
+  const [yy,mm,dd]=dateVal.split('-');
+  const taskDateDisplay=`${dd}/${mm}/${yy}`;
+
+  const initStatus = selected.length ? 'new' : 'unassigned';
+  const task={ id:nextId++, title, desc:document.getElementById('new-desc').value.trim(), area:document.getElementById('new-area').value.trim(), taskDate:taskDateDisplay, start, end, assignees:selected, status:initStatus, pct:0, mgrPhotos:getUrls(mgrPending), staffPhotos:[], assignedAt:fmtDT(new Date()), completedAt:'', createdAt:new Date().toISOString() };
+  tasks.unshift(task);
+  await syncToSheet(task);
+
+  btn.disabled=false; btn.innerHTML='✓ Tạo công việc';
+  closeModal('modal-create');
+  renderMgrTasks();
+  showToast('✅ Đã tạo công việc!','success');
+}
+
+// ══════════════════════════════════════════════
+//  DETAIL
+// ══════════════════════════════════════════════
+function openDetail(id, role){
+  activeDetailTaskId=id;
+  const t=tasks.find(x=>x.id===id); if(!t) return;
+  if (role==='mgr'){
+    const sl={new:'🔴 Chưa bắt đầu',progress:'🟡 Đang thực hiện',done:'✅ Hoàn thành',unassigned:'❓ Chưa xác định'};
+    const mgrPH=t.mgrPhotos.length ? t.mgrPhotos.map(u=>`<img class="detail-photo" src="${u}" onclick="window.open('${u}')" onerror="this.outerHTML='<div class=\\'detail-photo ph\\'>📷</div>'">`).join('') : `<div class="detail-photo ph">📷</div><span style="font-size:12px;color:var(--gray-400)">Chưa có ảnh</span>`;
+    const staffPH=t.staffPhotos.length ? t.staffPhotos.map(u=>`<img class="detail-photo" src="${u}" onclick="window.open('${u}')" onerror="this.outerHTML='<div class=\\'detail-photo ph\\'>📷</div>'">`).join('') : `<span style="font-size:12px;color:var(--gray-400)">Nhân viên chưa tải ảnh</span>`;
+    document.getElementById('detail-mgr-content').innerHTML=`
+      <div class="modal-title">${t.title}</div>
+      <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-val">${sl[t.status]}</span></div>
+      ${t.taskDate?`<div class="info-row"><span class="info-label">📅 Ngày thực hiện</span><span class="info-val" style="font-weight:700;color:var(--gray-900)">${t.taskDate}</span></div>`:''}
+      <div class="info-row"><span class="info-label">Thời gian thực hiện</span><span class="info-val">${t.start} – ${t.end}</span></div>
+      <div class="info-row"><span class="info-label">Khu vực</span><span class="info-val">${t.area||'—'}</span></div>
+      <div class="info-row"><span class="info-label">Nhân viên</span><span class="info-val">${t.assignees.join(', ')}</span></div>
+      <div class="info-row"><span class="info-label">Tiến độ</span><span class="info-val" style="color:var(--teal)">${t.pct}%</span></div>
+      <div class="info-row"><span class="info-label">📅 Giờ giao việc</span><span class="info-val" style="color:var(--teal-dark)">${t.assignedAt||'—'}</span></div>
+      ${t.completedAt?`<div class="info-row"><span class="info-label">✅ Giờ hoàn thành</span><span class="info-val" style="color:var(--teal)">${t.completedAt}</span></div>`:''}
+      ${t.desc?`<div style="background:var(--gray-50);border-radius:8px;padding:12px;margin:12px 0;font-size:13px;color:var(--gray-700);line-height:1.6">${t.desc}</div>`:''}
+      <div style="margin:14px 0 8px"><div class="info-label" style="margin-bottom:8px">📷 Ảnh hiện trường (quản lý gửi)</div><div class="detail-photos">${mgrPH}</div></div>
+      <div style="margin:14px 0 8px"><div class="info-label" style="margin-bottom:8px">📸 Ảnh xác nhận (nhân viên gửi)</div><div class="detail-photos">${staffPH}</div></div>
+      <button onclick="openEditModal(${t.id})" style="width:100%;padding:13px;background:var(--teal-light);color:var(--teal-dark);border:1.5px solid var(--teal);border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px">✏️ Sửa công việc</button>
+      ${t.status!=='done'?`<button onclick="markDoneMgr(${t.id})" style="width:100%;padding:13px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px">✓ Đánh dấu hoàn thành</button>`:''}
+      <button onclick="delTask(${t.id})" style="width:100%;padding:11px;background:var(--red-light);color:var(--red);border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px">🗑 Xóa công việc</button>`;
+    document.getElementById('modal-detail-mgr').classList.add('open');
+  } else {
+    openStaffDetail(id);
+  }
+}
+
+async function markDoneMgr(id){
+  const t=tasks.find(x=>x.id===id); if(t){ t.status='done'; t.pct=100; t.completedAt=fmtDT(new Date()); }
+  closeModal('modal-detail-mgr'); renderMgrTasks(); await syncToSheet(t);
+  showToast('✅ Đã hoàn thành!','success');
+}
+
+async function delTask(id){
+  tasks=tasks.filter(x=>x.id!==id);
+  await deleteTaskFromSheet(id);
+  closeModal('modal-detail-mgr'); renderMgrTasks();
+  showToast('🗑 Đã xóa công việc');
+}
+
+// ══════════════════════════════════════════════
+//  EDIT TASK
+// ══════════════════════════════════════════════
+function openEditModal(id){
+  const t=tasks.find(x=>x.id===id); if(!t) return;
+  activeDetailTaskId=id;
+  editPending=[];
+
+  // Pre-fill fields
+  document.getElementById('edit-title').value  = t.title;
+  document.getElementById('edit-desc').value   = t.desc||'';
+  // Convert dd/MM/yyyy → yyyy-MM-dd for date input
+  if (t.taskDate) {
+    const [dd,mm,yy]=t.taskDate.split('/');
+    document.getElementById('edit-date').value=`${yy}-${mm}-${dd}`;
+  } else {
+    const today=new Date(); const yy=today.getFullYear(), mm=String(today.getMonth()+1).padStart(2,'0'), dd=String(today.getDate()).padStart(2,'0');
+    document.getElementById('edit-date').value=`${yy}-${mm}-${dd}`;
+  }
+  document.getElementById('edit-start').value  = t.start;
+  document.getElementById('edit-end').value    = t.end;
+  document.getElementById('edit-area').value   = t.area||'';
+  document.getElementById('edit-status').value = t.status;
+  document.getElementById('edit-preview').innerHTML = '';
+  const ds=document.getElementById('edit-drive-status'); if(ds){ ds.style.display='none'; ds.textContent=''; }
+
+  // Show existing mgr photos with delete option
+  const existingWrap = document.getElementById('edit-preview-existing');
+  if (t.mgrPhotos.length) {
+    existingWrap.innerHTML = `<div style="font-size:11px;font-weight:600;color:var(--gray-400);margin-bottom:6px;letter-spacing:.04em">ẢNH HIỆN CÓ</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px" id="existing-photos-grid">
+      ${t.mgrPhotos.map((u,i)=>`
+        <div style="position:relative;width:76px;height:60px" id="exist-wrap-${i}">
+          <img src="${u}" style="width:76px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--gray-200)">
+          <button onclick="removeExistingPhoto(${id},${i})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:var(--red);border:none;border-radius:50%;color:white;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font);font-weight:700;line-height:1">✕</button>
+        </div>`).join('')}
+      </div>`;
+  } else {
+    existingWrap.innerHTML = '';
+  }
+
+  // Assignees chips
+  document.getElementById('edit-assign-list').innerHTML = STAFF_LIST.map(n =>
+    `<div class="staff-chip ${t.assignees.includes(n)?'selected':''}" onclick="this.classList.toggle('selected')">${n}</div>`
+  ).join('');
+
+  closeModal('modal-detail-mgr');
+  document.getElementById('modal-edit').classList.add('open');
+}
+
+function removeExistingPhoto(taskId, photoIdx){
+  const t=tasks.find(x=>x.id===taskId); if(!t) return;
+  t.mgrPhotos.splice(photoIdx,1);
+  // Re-render existing photos section
+  const grid=document.getElementById('existing-photos-grid');
+  if(!grid) return;
+  if(!t.mgrPhotos.length){ grid.parentElement.innerHTML=''; return; }
+  grid.innerHTML=t.mgrPhotos.map((u,i)=>`
+    <div style="position:relative;width:76px;height:60px" id="exist-wrap-${i}">
+      <img src="${u}" style="width:76px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--gray-200)">
+      <button onclick="removeExistingPhoto(${taskId},${i})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:var(--red);border:none;border-radius:50%;color:white;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font);font-weight:700;line-height:1">✕</button>
+    </div>`).join('');
+}
+
+async function saveEditTask(){
+  const t=tasks.find(x=>x.id===activeDetailTaskId); if(!t) return;
+  const title=document.getElementById('edit-title').value.trim();
+  const start=document.getElementById('edit-start').value;
+  const end=document.getElementById('edit-end').value;
+  const selected=[...document.querySelectorAll('#edit-assign-list .staff-chip.selected')].map(el=>el.textContent);
+
+  if(!title){ showToast('Vui lòng nhập tên công việc!'); return; }
+  if(!start||!end){ showToast('Vui lòng chọn thời gian!'); return; }
+  if(editPending.some(p=>p&&p.status==='uploading')){ showToast('⏳ Đang tải ảnh lên Drive...'); return; }
+
+  const btn=document.getElementById('btn-save-edit');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Đang lưu...';
+
+  let newStatus=document.getElementById('edit-status').value;
+  // Auto-set: if no assignees selected → force unassigned
+  if(!selected.length) newStatus='unassigned';
+  // Auto-upgrade: if was unassigned and now has assignees, and manager picked a real status
+  if(selected.length && newStatus==='unassigned') newStatus='new';
+  // If status changed to done and wasn't done before → set completedAt
+  if(newStatus==='done'&&t.status!=='done') t.completedAt=fmtDT(new Date());
+  // If status changed away from done → clear completedAt
+  if(newStatus!=='done'&&t.status==='done') t.completedAt='';
+
+  t.title    = title;
+  t.desc     = document.getElementById('edit-desc').value.trim();
+  t.start    = start;
+  t.end      = end;
+  t.area     = document.getElementById('edit-area').value.trim();
+  // Save date
+  const editDateVal=document.getElementById('edit-date').value;
+  if(editDateVal){ const [yy,mm,dd]=editDateVal.split('-'); t.taskDate=`${dd}/${mm}/${yy}`; }
+  t.assignees= selected;
+  t.status   = newStatus;
+  t.pct      = newStatus==='done'?100:newStatus==='new'?0:t.pct;
+  // Append new photos (existing already mutated by removeExistingPhoto)
+  const newPhotos=getUrls(editPending);
+  t.mgrPhotos=[...t.mgrPhotos,...newPhotos];
+
+  await syncToSheet(t);
+  btn.disabled=false; btn.innerHTML='💾 Lưu thay đổi';
+  closeModal('modal-edit');
+  renderMgrTasks();
+  showToast('✅ Đã cập nhật công việc!','success');
+}
+
+// ══════════════════════════════════════════════
+//  STAFF VIEW
+// ══════════════════════════════════════════════
+let staffFilter = 'all'; // 'all' | 'pending' | 'done'
+
+function setStaffFilter(f){ staffFilter=f; renderStaffView(); }
+
+function renderStaffView(){
+  const my=tasks.filter(t=>t.assignees.includes(currentUser));
+  const pending=my.filter(t=>t.status!=='done');
+  const done=my.filter(t=>t.status==='done');
+
+  document.getElementById('s-total').textContent=my.length;
+  document.getElementById('s-pending').textContent=pending.length;
+  document.getElementById('s-done').textContent=done.length;
+
+  const filtered = staffFilter==='pending' ? pending : staffFilter==='done' ? done : my;
+  const ord={unassigned:0,new:1,progress:2,done:3};
+
+  let html=`
+    <div class="filter-row" style="padding:0 16px 0;margin-bottom:12px">
+      <div class="filter-chip ${staffFilter==='all'?'active':''}" onclick="setStaffFilter('all')">Tất cả (${my.length})</div>
+      <div class="filter-chip ${staffFilter==='pending'?'active':''}" onclick="setStaffFilter('pending')" style="${staffFilter==='pending'?'':'border-color:#D97706;color:#D97706'}">⏳ Chưa xong (${pending.length})</div>
+      <div class="filter-chip ${staffFilter==='done'?'active':''}" onclick="setStaffFilter('done')" style="${staffFilter==='done'?'':'border-color:#0D9373;color:#0D9373'}">✅ Hoàn thành (${done.length})</div>
+    </div>`;
+
+  if (!filtered.length){
+    const msg = staffFilter==='done' ? 'Chưa có công việc nào hoàn thành' : staffFilter==='pending' ? 'Không còn việc nào chưa xong! 🎉' : 'Chưa có công việc nào được giao!';
+    html += `<div class="empty-state"><div class="e-icon">${staffFilter==='done'?'📋':staffFilter==='pending'?'🎉':'📭'}</div><p>${msg}</p></div>`;
+  } else {
+    [...filtered].sort((a,b)=>ord[a.status]-ord[b.status]).forEach(t=>{ html+=taskCardHTML(t,'staff'); });
+  }
+  document.getElementById('staff-content').innerHTML=html;
+}
+
+function openStaffDetail(id){
+  activeDetailTaskId=id; selectedPct=null; staffPending=[];
+  const t=tasks.find(x=>x.id===id); if(!t) return;
+  if (t.pct>0&&t.pct<100) selectedPct=t.pct;
+  const mgrPH=t.mgrPhotos.length ? t.mgrPhotos.map(u=>`<img class="detail-photo" src="${u}" onclick="window.open('${u}')" onerror="this.outerHTML='<div class=\\'detail-photo ph\\'>📷</div>'">`).join('') : `<span style="font-size:12px;color:var(--gray-400)">Chưa có ảnh từ quản lý</span>`;
+
+  document.getElementById('detail-staff-content').innerHTML=`
+    <div class="modal-title">${t.title}</div>
+    ${t.desc?`<div style="background:var(--teal-light);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px;color:var(--teal-dark);line-height:1.6">💬 ${t.desc}</div>`:''}
+    ${t.taskDate?`<div class="info-row"><span class="info-label">📅 Ngày thực hiện</span><span class="info-val" style="font-weight:700;color:var(--gray-900)">${t.taskDate}</span></div>`:''}
+    <div class="info-row"><span class="info-label">Thời gian thực hiện</span><span class="info-val">${t.start} – ${t.end}</span></div>
+    <div class="info-row"><span class="info-label">Khu vực</span><span class="info-val">${t.area||'—'}</span></div>
+    <div class="info-row"><span class="info-label">📅 Được giao lúc</span><span class="info-val" style="color:var(--teal-dark)">${t.assignedAt||'—'}</span></div>
+    ${t.completedAt?`<div class="info-row"><span class="info-label">✅ Hoàn thành lúc</span><span class="info-val" style="color:var(--teal)">${t.completedAt}</span></div>`:''}
+    <div style="margin:14px 0 8px"><div class="info-label" style="margin-bottom:8px">📷 Ảnh hiện trường từ quản lý</div><div class="detail-photos">${mgrPH}</div></div>
+    ${t.status!=='done'?`
+      <div style="margin:16px 0 8px;font-size:13px;font-weight:600;color:var(--gray-700)">Cập nhật tiến độ:</div>
+      <div class="pct-buttons">
+        ${[20,50,70].map(p=>`<button class="pct-btn ${selectedPct===p?'selected':''}" id="pct-${p}" onclick="selectPct(${p})">${p}%</button>`).join('')}
+      </div>
+      <label class="form-label" style="margin-bottom:6px">TẢI ẢNH XÁC NHẬN
+        <span id="staff-drive-status" style="display:none"></span>
+      </label>
+      <div class="upload-area" onclick="document.getElementById('staff-photo-input').click()">
+        <div class="up-icon">📸</div><p>Chụp ảnh công việc đã làm<small>Tự lưu vào Google Drive "Suối Rao Ecolodge"</small></p>
+      </div>
+      <input type="file" id="staff-photo-input" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(this,'staff')">
+      <div class="upload-preview" id="staff-preview"></div>
+      <div style="height:12px"></div>
+      <button class="btn-done" id="btn-staff-done" onclick="submitProgress('done')">✅ Hoàn thành công việc</button>
+      <button id="btn-staff-pct" onclick="submitProgress('progress')" style="width:100%;padding:13px;background:var(--amber-light);color:var(--amber);border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer">⏳ Cập nhật tiến độ</button>
+    `:`<div style="background:var(--teal-light);border-radius:10px;padding:16px;text-align:center;margin-top:12px"><div style="font-size:32px;margin-bottom:6px">🎉</div><div style="font-weight:600;color:var(--teal-dark);font-size:15px">Đã hoàn thành!</div></div>`}`;
+  document.getElementById('modal-detail-staff').classList.add('open');
+}
+
+function selectPct(p){
+  selectedPct=p;
+  [20,50,70].forEach(x=>{ const el=document.getElementById('pct-'+x); if(el) el.classList.toggle('selected',x===p); });
+}
+
+async function submitProgress(status){
+  const t=tasks.find(x=>x.id===activeDetailTaskId); if(!t) return;
+  if (status==='progress'&&!selectedPct){ showToast('Vui lòng chọn % tiến độ!'); return; }
+  if (staffPending.some(p=>p&&p.status==='uploading')){ showToast('⏳ Đang tải ảnh lên Drive...'); return; }
+
+  const dBtn=document.getElementById('btn-staff-done');
+  const pBtn=document.getElementById('btn-staff-pct');
+  if(dBtn){ dBtn.disabled=true; dBtn.innerHTML='<span class="spinner"></span> Đang xử lý...'; }
+  if(pBtn) pBtn.disabled=true;
+
+  const newPhotos=getUrls(staffPending);
+  t.staffPhotos=[...t.staffPhotos,...newPhotos];
+  if (status==='done'){ t.status='done'; t.pct=100; t.completedAt=fmtDT(new Date()); } else { t.status='progress'; t.pct=selectedPct; }
+
+  await syncToSheet(t);
+  closeModal('modal-detail-staff'); renderStaffView();
+  showToast(status==='done'?'✅ Hoàn thành! Quản lý đã được cập nhật.':`📊 Đã cập nhật ${selectedPct}%`,'success');
+}
+
+// ══════════════════════════════════════════════
+//  LOAD FROM SHEET (khởi động)
+// ══════════════════════════════════════════════
+async function loadFromSheet(){
+  showLoading('Đang tải dữ liệu từ Google Sheet...', 'Vui lòng chờ trong giây lát');
+  try {
+    const res = await fetch(SCRIPT_URL+'?action=getTasks', { method:'GET' });
+    const json = await res.json();
+    if (json.tasks && Array.isArray(json.tasks) && json.tasks.length > 0) {
+      tasks = json.tasks;
+      // Đảm bảo ID counter cao hơn max ID hiện có
+      nextId = Math.max(...tasks.map(t=>t.id||0)) + 1;
+      showToast(`✅ Đã tải ${tasks.length} công việc từ Sheet`, 'success');
+    } else if (json.tasks && json.tasks.length === 0) {
+      tasks = []; nextId = 1;
+      showToast('Sheet chưa có dữ liệu — bắt đầu mới', '');
+    }
+    // Nếu lỗi hoặc không kết nối được → giữ nguyên dữ liệu mẫu
+  } catch(e) {
+    console.warn('Load from sheet failed:', e);
+    showToast('⚠️ Không thể tải Sheet — dùng dữ liệu hiện có', '');
+  } finally {
+    hideLoading();
+  }
+}
+
+function showLoading(text, sub){
+  const ov=document.getElementById('loading-overlay');
+  document.getElementById('loading-text').textContent=text||'Đang tải...';
+  document.getElementById('loading-sub').textContent=sub||'';
+  ov.classList.add('show');
+}
+function hideLoading(){
+  document.getElementById('loading-overlay').classList.remove('show');
+}
+
+// ── Nút tải lại thủ công (trong Sheet tab) ──
+async function reloadFromSheet(){
+  if (!SCRIPT_URL){ showToast('Chưa có URL Apps Script!','error'); return; }
+  await loadFromSheet();
+  renderMgrTasks();
+}
+
+// ══════════════════════════════════════════════
+//  SYNC TO SHEET
+// ══════════════════════════════════════════════
+async function syncToSheet(task){
+  if (!SCRIPT_URL) return;
+  try {
+    await fetch(SCRIPT_URL,{ method:'POST', body: JSON.stringify({
+      action:'syncTask', id:task.id, title:task.title, area:task.area||'',
+      assignees:task.assignees, start:task.start, end:task.end,
+      taskDate: task.taskDate||'',
+      status:task.status, pct:task.pct,
+      photos:[...task.mgrPhotos,...task.staffPhotos],
+      assignedAt: task.assignedAt||'',
+      completedAt: task.completedAt||'',
+      updatedAt: fmtDT(new Date())
+    })});
+  } catch(e){ console.warn('Sheet sync error',e); }
+}
+
+async function deleteTaskFromSheet(id){
+  if (!SCRIPT_URL) return;
+  try {
+    await fetch(SCRIPT_URL,{ method:'POST', body: JSON.stringify({ action:'deleteTask', id }) });
+  } catch(e){ console.warn('Delete from sheet error',e); }
+}
+
+async function syncAll(){
+  if (!SCRIPT_URL){ showToast('Chưa có URL Apps Script!','error'); return; }
+  showLoading('Đang đồng bộ tất cả...','');
+  for (const t of tasks) await syncToSheet(t);
+  hideLoading();
+  showToast('✅ Đã đồng bộ tất cả vào Sheet!','success');
+}
+
+// ══════════════════════════════════════════════
+//  APPS SCRIPT
+// ══════════════════════════════════════════════
+function buildScript(){
+return `// ═══════════════════════════════════════════════════════
+// RESORT MANAGER — Google Apps Script
+// Hướng dẫn: Dán vào Extensions > Apps Script trong Google Sheet
+// Deploy: New deployment > Web app
+//   Execute as: Me (your Google account)
+//   Who has access: Anyone
+// ═══════════════════════════════════════════════════════
+
+const FOLDER_NAME = "Suối Rao Ecolodge";   // Tên thư mục Drive lưu ảnh
+const SHEET_NAME  = "Công việc";        // Tên tab trong Google Sheet
+
+// ─── Lấy hoặc tạo thư mục Drive ───────────────────────
+function getFolder() {
+  const it = DriveApp.getFoldersByName(FOLDER_NAME);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(FOLDER_NAME);
+}
+
+// ─── Lấy hoặc tạo sheet với header ────────────────────
+function getSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh   = ss.getSheetByName(SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_NAME);
+    const h = ["ID","Công việc","Khu vực","Nhân viên phụ trách",
+               "Ngày thực hiện","Giờ thực hiện","Trạng thái","Tiến độ %",
+               "Giờ giao việc","Giờ hoàn thành",
+               "Ảnh Drive (link)","Cập nhật lúc"];
+    sh.getRange(1,1,1,h.length).setValues([h])
+      .setFontWeight("bold")
+      .setBackground("#0D9373")
+      .setFontColor("white");
+    sh.setFrozenRows(1);
+    sh.setColumnWidth(8, 160);
+    sh.setColumnWidth(9, 160);
+    sh.setColumnWidth(10, 300);
+  }
+  return sh;
+}
+
+// ─── Nhận POST từ app ──────────────────────────────────
+function doPost(e) {
+  try {
+    const d = JSON.parse(e.postData.contents);
+
+    // --- Upload ảnh lên Drive ---
+    if (d.action === "uploadPhoto") {
+      const folder = getFolder();
+      const bytes  = Utilities.base64Decode(d.data);
+      const blob   = Utilities.newBlob(bytes, d.mimeType, d.fileName);
+      const file   = folder.createFile(blob);
+
+      // Đặt chia sẻ: ai có link đều xem được
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+      // Link trực tiếp hiển thị ảnh (dùng được trong Sheet)
+      const url = "https://drive.google.com/uc?export=view&id=" + file.getId();
+      return out({ success: true, url, fileId: file.getId() });
+    }
+
+    // --- Ghi / cập nhật dòng công việc vào Sheet ---
+    if (d.action === "syncTask") {
+      const sh     = getSheet();
+      const data   = sh.getDataRange().getValues();
+      let rowIndex = -1;
+
+      // Tìm hàng có ID trùng để update
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === String(d.id)) { rowIndex = i + 1; break; }
+      }
+
+      const statusLabel =
+        d.status === "done"        ? "✅ Hoàn thành" :
+        d.status === "progress"    ? "🟡 " + d.pct + "%" :
+        d.status === "unassigned"  ? "❓ Chưa xác định" :
+                                     "🔴 Chưa bắt đầu";
+
+      const photoLinks = (d.photos || []).join("\\n");  // Mỗi link 1 dòng trong ô
+
+      const row = [
+        d.id,
+        d.title,
+        d.area || "",
+        (d.assignees || []).join(", "),
+        d.taskDate    || "",
+        d.start + " – " + d.end,
+        statusLabel,
+        d.pct + "%",
+        d.assignedAt  || "",
+        d.completedAt || "",
+        photoLinks,
+        d.updatedAt || new Date().toLocaleString("vi-VN")
+      ];
+
+      if (rowIndex > 0) {
+        sh.getRange(rowIndex, 1, 1, row.length).setValues([row]);
+      } else {
+        sh.appendRow(row);
+        rowIndex = sh.getLastRow();
+      }
+
+      // Tô màu nền theo trạng thái
+      const bg =
+        d.status === "done"       ? "#DCFCE7" :
+        d.status === "progress"   ? "#FEF9C3" :
+        d.status === "unassigned" ? "#EDE9FE" : "#FEE2E2";
+      sh.getRange(rowIndex, 1, 1, row.length).setBackground(bg);
+
+      // Nếu có ảnh: tạo hyperlink có thể click trong ô
+      if (d.photos && d.photos.length > 0) {
+        const cell = sh.getRange(rowIndex, 11);
+        const richText = SpreadsheetApp.newRichTextValue()
+          .setText(d.photos.join("\\n"))
+          .build();
+        cell.setRichTextValue(richText);
+      }
+
+      return out({ success: true, row: rowIndex });
+    }
+
+    // --- Xóa hàng công việc khỏi Sheet ---
+    if (d.action === "deleteTask") {
+      const sh   = getSheet();
+      const data = sh.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === String(d.id)) {
+          sh.deleteRow(i + 1);
+          return out({ success: true, deleted: d.id });
+        }
+      }
+      return out({ success: true, note: "Row not found" });
+    }
+
+    return out({ error: "Unknown action: " + d.action });
+
+  } catch (err) {
+    return out({ error: err.message, stack: err.stack });
+  }
+}
+
+// ─── GET: trả về danh sách công việc hoặc kiểm tra sức khoẻ ──
+function doGet(e) {
+  const action = e && e.parameter && e.parameter.action;
+
+  if (action === "getTasks") {
+    try {
+      const sh   = getSheet();
+      const data = sh.getDataRange().getValues();
+      if (data.length <= 1) return out({ tasks: [] }); // Chỉ có header
+
+      // Cấu trúc cột (12 cột, index 0-11):
+      // 0=ID, 1=Tên, 2=Khu vực, 3=Nhân viên, 4=Ngày thực hiện,
+      // 5=Giờ thực hiện, 6=Trạng thái, 7=Tiến độ%,
+      // 8=Giờ giao việc, 9=Giờ hoàn thành, 10=Ảnh Drive, 11=Cập nhật lúc
+
+      const tasks = [];
+      for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (!row[0]) continue; // Bỏ qua hàng trống
+
+        // Trạng thái từ cột 7 (index 6)
+        const statusRaw = String(row[6] || "");
+        let status = "new";
+        let pct    = 0;
+        if (statusRaw.includes("Hoàn thành"))    { status = "done";       pct = 100; }
+        else if (statusRaw.includes("Chưa xác")) { status = "unassigned"; pct = 0;   }
+        else if (statusRaw.includes("%")) {
+          status = "progress";
+          const m = statusRaw.match(/\\d+/);
+          pct = m ? parseInt(m[0]) : 50;
+        }
+
+        // Giờ thực hiện từ cột 6 (index 5) — dạng "07:00 – 09:00"
+        const timeParts = String(row[5] || "").split(" – ");
+        const startTime = timeParts[0] || "08:00";
+        const endTime   = timeParts[1] || "10:00";
+
+        // Ảnh từ cột 11 (index 10) — mỗi link 1 dòng
+        const photoRaw  = String(row[10] || "");
+        const allPhotos = photoRaw ? photoRaw.split("\\n").filter(Boolean) : [];
+
+        tasks.push({
+          id:          parseInt(row[0]) || i,
+          title:       String(row[1] || ""),
+          area:        String(row[2] || ""),
+          assignees:   row[3] ? String(row[3]).split(", ").filter(Boolean) : [],
+          taskDate:    String(row[4] || ""),
+          start:       startTime,
+          end:         endTime,
+          status,
+          pct,
+          assignedAt:  String(row[8] || ""),
+          completedAt: String(row[9] || ""),
+          mgrPhotos:   allPhotos,
+          staffPhotos: [],
+          desc:        "",
+          createdAt:   new Date().toISOString()
+        });
+      }
+      return out({ tasks });
+    } catch(err) {
+      return out({ error: err.message });
+    }
+  }
+
+  // Mặc định: kiểm tra sức khoẻ
+  return ContentService.createTextOutput(
+    "✅ Suối Rao Ecolodge API đang hoạt động | " + new Date().toLocaleString("vi-VN")
+  );
+}
+
+// ─── Helper: trả JSON ──────────────────────────────────
+function out(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+}
+
+function copyScript(){
+  if (navigator.clipboard) navigator.clipboard.writeText(buildScript()).then(()=>showToast('✅ Đã sao chép script!','success'));
+  else showToast('Hãy bôi đen và copy thủ công');
+}
+
+// ══════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+function fmtDT(d){
+  const pad=n=>String(n).padStart(2,'0');
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+let _toastTimer;
+function showToast(msg, type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='show'+(type?' '+type:'');
+  clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>{ t.className=''; },3200);
+}
+
+function todayStr(){
+  const d=new Date(), days=['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+  return `${days[d.getDay()]}, ${d.toLocaleDateString('vi-VN')}`;
+}
+
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// init
+setRole('manager');
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</body>
+</html>
