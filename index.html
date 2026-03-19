@@ -371,11 +371,16 @@ textarea.form-input{resize:none;min-height:72px}
     </div>
     <div class="modal-section">
       <label class="form-label">NGÀY THỰC HIỆN *</label>
-      <input type="date" class="form-input" id="new-date">
+      <input type="date" class="form-input" id="new-date" onchange="updateSessionOptions('new')">
     </div>
-    <div class="modal-section" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div><label class="form-label">GIỜ BẮT ĐẦU *</label><input type="time" class="form-input" id="new-start" value="07:00"></div>
-      <div><label class="form-label">GIỜ KẾT THÚC *</label><input type="time" class="form-input" id="new-end" value="09:00"></div>
+    <div class="modal-section">
+      <label class="form-label">THỜI GIAN THỰC HIỆN *</label>
+      <div class="select-wrap">
+        <select class="form-select" id="new-session">
+          <option value="urgent">🔴 LÀM GẤP</option>
+          <option value="today">📋 Trong ngày</option>
+        </select>
+      </div>
     </div>
     <div class="modal-section">
       <label class="form-label">KHU VỰC</label>
@@ -417,11 +422,16 @@ textarea.form-input{resize:none;min-height:72px}
     </div>
     <div class="modal-section">
       <label class="form-label">NGÀY THỰC HIỆN *</label>
-      <input type="date" class="form-input" id="edit-date">
+      <input type="date" class="form-input" id="edit-date" onchange="updateSessionOptions('edit')">
     </div>
-    <div class="modal-section" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div><label class="form-label">GIỜ BẮT ĐẦU *</label><input type="time" class="form-input" id="edit-start"></div>
-      <div><label class="form-label">GIỜ KẾT THÚC *</label><input type="time" class="form-input" id="edit-end"></div>
+    <div class="modal-section">
+      <label class="form-label">THỜI GIAN THỰC HIỆN *</label>
+      <div class="select-wrap">
+        <select class="form-select" id="edit-session">
+          <option value="urgent">🔴 LÀM GẤP</option>
+          <option value="today">📋 Trong ngày</option>
+        </select>
+      </div>
     </div>
     <div class="modal-section">
       <label class="form-label">KHU VỰC</label>
@@ -910,7 +920,7 @@ function taskCardHTML(t, role){
     <div class="task-header"><div class="task-title">${t.title}</div><span class="badge ${bc}">${bl}</span></div>
     <div class="task-meta">
       ${t.taskDate?`<span>📅 ${normalizeDateOnly(t.taskDate)}</span>`:''}
-      <span>🕐 ${t.start}–${t.end}</span>
+      <span>🕐 ${t.session?sessionLabel(t.session):t.start+'–'+t.end}</span>
       ${t.area?`<span>📍 ${t.area}</span>`:''} ${sNote}
     </div>
     ${assigneeRow}
@@ -1028,7 +1038,7 @@ function renderDayView(now){
       html+=`<div class="day-detail-card" style="border-left-color:${t.status==='done'?'var(--teal)':t.status==='progress'?'var(--amber)':'var(--red)'}">
         <div class="day-detail-title">${t.title}</div>
         <div class="day-detail-meta">
-          <span>🕐 ${t.start}–${t.end}</span>
+          <span>🕐 ${t.session?sessionLabel(t.session):t.start+'–'+t.end}</span>
           ${t.area?`<span>📍 ${t.area}</span>`:''}
           <span class="badge ${bc}" style="font-size:10px">${bl}</span>
         </div>
@@ -1102,7 +1112,7 @@ function renderWeekView(now){
       const col=t.status==='done'?'var(--teal)':t.status==='progress'?'var(--amber)':'var(--red)';
       html+=`<div class="day-detail-card" style="border-left-color:${col};margin-bottom:6px">
         <div class="day-detail-title">${t.title}</div>
-        <div class="day-detail-meta"><span>🕐 ${t.start}–${t.end}</span>${t.area?`<span>📍 ${t.area}</span>`:''}</div>
+        <div class="day-detail-meta"><span>🕐 ${t.session?sessionLabel(t.session):t.start+'–'+t.end}</span>${t.area?`<span>📍 ${t.area}</span>`:''}</div>
         ${t.completedAt?`<div style="font-size:11px;color:var(--teal);margin-top:3px">✅ ${t.completedAt}</div>`:''}
       </div>`;
     });
@@ -1358,7 +1368,7 @@ function calDayClick(key){
     html+=`<div class="day-detail-card" style="border-left-color:${col}">
       <div class="day-detail-title">${t.title}</div>
       <div class="day-detail-meta">
-        <span>🕐 ${t.start}–${t.end}</span>
+        <span>🕐 ${t.session?sessionLabel(t.session):t.start+'–'+t.end}</span>
         ${t.area?`<span>📍 ${t.area}</span>`:''}
         <span>${sm[t.status]}</span>
       </div>
@@ -1481,7 +1491,7 @@ function renderSheetTab(){
       <td>${t.id}</td>
       <td style="font-weight:500">${t.title}</td>
       <td>${t.assignees.join(', ')}</td>
-      <td>${t.start}–${t.end}</td>
+      <td>${t.session?sessionLabel(t.session):t.start+'–'+t.end}</td>
       <td><span class="sheet-badge" style="${sc}">${sl}</span></td>
       <td style="color:var(--teal-dark);font-size:11px">${normalizeDT(t.assignedAt)||'—'}</td>
       <td style="color:var(--teal);font-size:11px">${normalizeDT(t.completedAt)||'—'}</td>
@@ -1541,6 +1551,55 @@ function saveUrl(){
 }
 
 // ══════════════════════════════════════════════
+//  SESSION HELPERS (thay thế giờ bắt đầu/kết thúc)
+// ══════════════════════════════════════════════
+const SESSION_MAP = {
+  urgent:  { label:'🔴 LÀM GẤP',        start:'00:00', end:'23:59' },
+  today:   { label:'📋 Trong ngày',       start:'07:00', end:'17:30' },
+  prepare: { label:'🗓 Chuẩn bị làm',    start:'00:00', end:'23:59' },
+};
+
+function sessionFromStartEnd(start, end){
+  if (!start) return 'today';
+  if (start==='07:00'&&end==='11:30') return 'today';
+  if (start==='13:00'&&end==='17:30') return 'today';
+  if (start==='00:00'&&end==='23:59') return 'urgent';
+  return 'today';
+}
+
+function isToday(dateVal){
+  if (!dateVal) return true;
+  const today=new Date();
+  const [yy,mm,dd]=dateVal.split('-').map(Number);
+  return yy===today.getFullYear()&&mm===today.getMonth()+1&&dd===today.getDate();
+}
+
+function updateSessionOptions(prefix){
+  const dateVal=document.getElementById(`${prefix}-date`).value;
+  const sel=document.getElementById(`${prefix}-session`);
+  const current=sel.value;
+  const isFuture = dateVal && !isToday(dateVal);
+
+  sel.innerHTML='';
+  const opts = isFuture
+    ? [['prepare','🗓 Chuẩn bị làm'],['urgent','🔴 LÀM GẤP'],['today','📋 Trong ngày']]
+    : [['urgent','🔴 LÀM GẤP'],['today','📋 Trong ngày']];
+
+  opts.forEach(([v,t])=>{ const o=document.createElement('option'); o.value=v; o.textContent=t; sel.appendChild(o); });
+  if([...sel.options].some(o=>o.value===current)) sel.value=current;
+  else sel.value = isFuture ? 'prepare' : 'today';
+}
+
+function sessionToStartEnd(session){
+  const s=SESSION_MAP[session]||SESSION_MAP.today;
+  return { start:s.start, end:s.end };
+}
+
+function sessionLabel(session){
+  return (SESSION_MAP[session]||SESSION_MAP.today).label;
+}
+
+// ══════════════════════════════════════════════
 //  CREATE TASK
 // ══════════════════════════════════════════════
 function openCreateModal(){
@@ -1549,8 +1608,8 @@ function openCreateModal(){
   // Default: hôm nay
   const today=new Date(); const yy=today.getFullYear(), mm=String(today.getMonth()+1).padStart(2,'0'), dd=String(today.getDate()).padStart(2,'0');
   document.getElementById('new-date').value=`${yy}-${mm}-${dd}`;
-  document.getElementById('new-start').value='07:00';
-  document.getElementById('new-end').value='09:00';
+  updateSessionOptions('new');
+  document.getElementById('new-session').value='today';
   const ds=document.getElementById('mgr-drive-status'); if(ds){ ds.className=''; ds.textContent=''; }
   document.getElementById('assign-list').innerHTML=STAFF_LIST.map(n=>`<div class="staff-chip" onclick="this.classList.toggle('selected')">${n}</div>`).join('');
   document.getElementById('modal-create').classList.add('open');
@@ -1559,23 +1618,22 @@ function openCreateModal(){
 async function createTask(){
   const title=document.getElementById('new-title').value.trim();
   const dateVal=document.getElementById('new-date').value;
-  const start=document.getElementById('new-start').value;
-  const end=document.getElementById('new-end').value;
+  const session=document.getElementById('new-session').value;
   const selected=[...document.querySelectorAll('#assign-list .staff-chip.selected')].map(el=>el.textContent);
   if (!title){ showToast('Vui lòng nhập tên công việc!'); return; }
   if (!dateVal){ showToast('Vui lòng chọn ngày thực hiện!'); return; }
-  if (!start||!end){ showToast('Vui lòng chọn giờ thực hiện!'); return; }
+  if (!session){ showToast('Vui lòng chọn thời gian thực hiện!'); return; }
   if (mgrPending.some(p=>p&&p.status==='uploading')){ showToast('⏳ Đang tải ảnh lên Drive, chờ xíu...'); return; }
 
   const btn=document.getElementById('btn-create-task');
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Đang tạo...';
 
-  // Format ngày hiển thị dd/MM/yyyy
   const [yy,mm,dd]=dateVal.split('-');
   const taskDateDisplay=`${dd}/${mm}/${yy}`;
+  const {start, end}=sessionToStartEnd(session);
 
   const initStatus = selected.length ? 'new' : 'unassigned';
-  const task={ id:nextId++, title, desc:document.getElementById('new-desc').value.trim(), area:document.getElementById('new-area').value.trim(), taskDate:taskDateDisplay, start, end, assignees:selected, status:initStatus, pct:0, mgrPhotos:getUrls(mgrPending), staffPhotos:[], staffNote:'', assignedAt:fmtDT(new Date()), completedAt:'', createdAt:fmtDT(new Date()) };
+  const task={ id:nextId++, title, desc:document.getElementById('new-desc').value.trim(), area:document.getElementById('new-area').value.trim(), taskDate:taskDateDisplay, session, start, end, assignees:selected, status:initStatus, pct:0, mgrPhotos:getUrls(mgrPending), staffPhotos:[], staffNote:'', assignedAt:fmtDT(new Date()), completedAt:'', createdAt:fmtDT(new Date()) };
   tasks.unshift(task);
   await syncToSheet(task);
 
@@ -1600,7 +1658,7 @@ function openDetail(id, role){
       <div class="modal-title">${t.title}</div>
       <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-val">${sl[t.status]}</span></div>
       ${t.taskDate?`<div class="info-row"><span class="info-label">📅 Ngày thực hiện</span><span class="info-val" style="font-weight:700;color:var(--gray-900)">${normalizeDateOnly(t.taskDate)}</span></div>`:''}
-      <div class="info-row"><span class="info-label">Thời gian thực hiện</span><span class="info-val">${t.start} – ${t.end}</span></div>
+      <div class="info-row"><span class="info-label">Thời gian thực hiện</span><span class="info-val">${t.session?sessionLabel(t.session):t.start+' – '+t.end}</span></div>
       <div class="info-row"><span class="info-label">Khu vực</span><span class="info-val">${t.area||'—'}</span></div>
       <div class="info-row"><span class="info-label">Nhân viên</span><span class="info-val">${t.assignees.join(', ')}</span></div>
       <div class="info-row"><span class="info-label">Tiến độ</span><span class="info-val" style="color:var(--teal)">${t.pct}%</span></div>
@@ -1654,8 +1712,11 @@ function openEditModal(id){
     const today=new Date(); const yy=today.getFullYear(), mm=String(today.getMonth()+1).padStart(2,'0'), dd=String(today.getDate()).padStart(2,'0');
     document.getElementById('edit-date').value=`${yy}-${mm}-${dd}`;
   }
-  document.getElementById('edit-start').value  = t.start;
-  document.getElementById('edit-end').value    = t.end;
+  // Restore session
+  updateSessionOptions('edit');
+  const savedSession = t.session || sessionFromStartEnd(t.start, t.end);
+  const sel=document.getElementById('edit-session');
+  if([...sel.options].some(o=>o.value===savedSession)) sel.value=savedSession;
   document.getElementById('edit-area').value   = t.area||'';
   document.getElementById('edit-status').value = t.status;
   document.getElementById('edit-preview').innerHTML = '';
@@ -1702,29 +1763,27 @@ function removeExistingPhoto(taskId, photoIdx){
 async function saveEditTask(){
   const t=tasks.find(x=>x.id===activeDetailTaskId); if(!t) return;
   const title=document.getElementById('edit-title').value.trim();
-  const start=document.getElementById('edit-start').value;
-  const end=document.getElementById('edit-end').value;
+  const session=document.getElementById('edit-session').value;
   const selected=[...document.querySelectorAll('#edit-assign-list .staff-chip.selected')].map(el=>el.textContent);
 
   if(!title){ showToast('Vui lòng nhập tên công việc!'); return; }
-  if(!start||!end){ showToast('Vui lòng chọn thời gian!'); return; }
+  if(!session){ showToast('Vui lòng chọn thời gian!'); return; }
   if(editPending.some(p=>p&&p.status==='uploading')){ showToast('⏳ Đang tải ảnh lên Drive...'); return; }
 
   const btn=document.getElementById('btn-save-edit');
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Đang lưu...';
 
+  const {start, end}=sessionToStartEnd(session);
+
   let newStatus=document.getElementById('edit-status').value;
-  // Auto-set: if no assignees selected → force unassigned
   if(!selected.length) newStatus='unassigned';
-  // Auto-upgrade: if was unassigned and now has assignees, and manager picked a real status
   if(selected.length && newStatus==='unassigned') newStatus='new';
-  // If status changed to done and wasn't done before → set completedAt
   if(newStatus==='done'&&t.status!=='done') t.completedAt=fmtDT(new Date());
-  // If status changed away from done → clear completedAt
   if(newStatus!=='done'&&t.status==='done') t.completedAt='';
 
   t.title    = title;
   t.desc     = document.getElementById('edit-desc').value.trim();
+  t.session  = session;
   t.start    = start;
   t.end      = end;
   t.area     = document.getElementById('edit-area').value.trim();
@@ -1790,7 +1849,7 @@ function openStaffDetail(id){
     <div class="modal-title">${t.title}</div>
     ${t.desc?`<div style="background:var(--teal-light);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px;color:var(--teal-dark);line-height:1.6">💬 ${t.desc}</div>`:''}
     ${t.taskDate?`<div class="info-row"><span class="info-label">📅 Ngày thực hiện</span><span class="info-val" style="font-weight:700;color:var(--gray-900)">${normalizeDateOnly(t.taskDate)}</span></div>`:''}
-    <div class="info-row"><span class="info-label">Thời gian thực hiện</span><span class="info-val">${t.start} – ${t.end}</span></div>
+    <div class="info-row"><span class="info-label">Thời gian thực hiện</span><span class="info-val">${t.session?sessionLabel(t.session):t.start+' – '+t.end}</span></div>
     <div class="info-row"><span class="info-label">Khu vực</span><span class="info-val">${t.area||'—'}</span></div>
     <div class="info-row"><span class="info-label">📅 Được giao lúc</span><span class="info-val" style="color:var(--teal-dark)">${normalizeDT(t.assignedAt)||'—'}</span></div>
     ${t.completedAt?`<div class="info-row"><span class="info-label">✅ Hoàn thành lúc</span><span class="info-val" style="color:var(--teal)">${normalizeDT(t.completedAt)}</span></div>`:''}
@@ -1905,6 +1964,7 @@ async function syncToSheet(task){
       action:'syncTask', id:task.id, title:task.title, area:task.area||'',
       assignees:task.assignees, start:task.start, end:task.end,
       taskDate: task.taskDate||'',
+      session:  task.session||'',
       status:task.status, pct:task.pct,
       photos:[...task.mgrPhotos,...task.staffPhotos],
       staffNote: task.staffNote||'',
@@ -2019,7 +2079,10 @@ function doPost(e) {
         d.area || "",
         (d.assignees || []).join(", "),
         d.taskDate    || "",
-        d.start + " – " + d.end,
+        d.session === "urgent"  ? "🔴 LÀM GẤP" :
+        d.session === "today"   ? "📋 Trong ngày" :
+        d.session === "prepare" ? "🗓 Chuẩn bị làm" :
+        (d.start + " – " + d.end),
         statusLabel,
         d.pct + "%",
         d.assignedAt  || "",
@@ -2108,10 +2171,21 @@ function doGet(e) {
           pct = m ? parseInt(m[0]) : 50;
         }
 
-        // Giờ thực hiện từ cột 6 (index 5) — dạng "07:00 – 09:00"
-        const timeParts = String(row[5] || "").split(" – ");
-        const startTime = timeParts[0] || "08:00";
-        const endTime   = timeParts[1] || "10:00";
+        // Giờ thực hiện từ cột 6 (index 5) — dạng label hoặc "07:00 – 09:00"
+        const timeRaw = String(row[5] || "");
+        let sessionVal = "";
+        let startTime = "08:00", endTime = "10:00";
+        if (timeRaw.includes("LÀM GẤP"))       { sessionVal="urgent";  startTime="00:00"; endTime="23:59"; }
+        else if (timeRaw.includes("Trong ngày")) { sessionVal="today";   startTime="07:00"; endTime="17:30"; }
+        else if (timeRaw.includes("Chuẩn bị"))  { sessionVal="prepare"; startTime="00:00"; endTime="23:59"; }
+        // legacy labels from old version
+        else if (timeRaw.includes("buổi sáng")) { sessionVal="today";   startTime="07:00"; endTime="17:30"; }
+        else if (timeRaw.includes("buổi chiều")){ sessionVal="today";   startTime="07:00"; endTime="17:30"; }
+        else {
+          const timeParts = timeRaw.split(" – ");
+          startTime = timeParts[0] || "08:00";
+          endTime   = timeParts[1] || "10:00";
+        }
 
         // Ảnh từ cột 12 (index 11) — mỗi link 1 dòng
         const photoRaw  = String(row[11] || "");
@@ -2125,6 +2199,7 @@ function doGet(e) {
           taskDate:    String(row[4] || ""),
           start:       startTime,
           end:         endTime,
+          session:     sessionVal,
           status,
           pct,
           assignedAt:  String(row[8] || ""),
