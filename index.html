@@ -276,7 +276,10 @@ textarea.form-input{resize:none;min-height:72px}
       <h2>🌴 Suối Rao Ecolodge</h2>
       <p id="mgr-date"></p>
     </div>
-    <button class="avatar-btn" id="mgr-avatar" onclick="logout()"></button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button id="mgr-refresh-btn" onclick="manualRefresh()" title="Đồng bộ dữ liệu" style="width:36px;height:36px;border-radius:50%;background:var(--teal-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px">🔄</button>
+      <button class="avatar-btn" id="mgr-avatar" onclick="logout()"></button>
+    </div>
   </div>
   <div class="content" id="mgr-content"></div>
   <nav class="bottom-nav" id="mgr-nav">
@@ -291,8 +294,13 @@ textarea.form-input{resize:none;min-height:72px}
 <!-- ═══ STAFF ═══ -->
 <div id="screen-staff" class="screen">
   <div class="my-task-header">
-    <h2>Xin chào, <span id="staff-name-display">Nhân viên</span> 👋</h2>
-    <p id="staff-date-display"></p>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div>
+        <h2>Xin chào, <span id="staff-name-display">Nhân viên</span> 👋</h2>
+        <p id="staff-date-display"></p>
+      </div>
+      <button id="staff-refresh-btn" onclick="manualRefresh()" title="Đồng bộ dữ liệu" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;margin-top:2px">🔄</button>
+    </div>
     <div class="my-stats">
       <div class="my-stat"><div class="n" id="s-total">0</div><div class="l">Tổng việc</div></div>
       <div class="my-stat"><div class="n" id="s-pending">0</div><div class="l">Chưa xong</div></div>
@@ -615,15 +623,80 @@ async function doLogin(){
     document.getElementById('staff-date-display').textContent=todayStr();
     renderStaffView();
   }
+  // Bắt đầu tự động đồng bộ dữ liệu mỗi 30 giây
+  startAutoRefresh();
 }
 
 function logout(){
   currentUser=null; staffFilter='all';
+  // Dừng auto-refresh khi đăng xuất
+  stopAutoRefresh();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-login').classList.add('active');
   const pwdInput=document.getElementById('login-pwd'); if(pwdInput) pwdInput.value='';
   const pwdGroup=document.getElementById('pwd-group'); if(pwdGroup) pwdGroup.style.display='none';
   setRole('manager');
+}
+
+// ══════════════════════════════════════════════
+//  AUTO-REFRESH (đồng bộ định kỳ)
+// ══════════════════════════════════════════════
+let _refreshTimer = null;
+const REFRESH_INTERVAL = 30000; // 30 giây
+
+function startAutoRefresh(){
+  stopAutoRefresh(); // Tránh chạy trùng
+  if (!SCRIPT_URL) return; // Không có Sheet thì không refresh
+  _refreshTimer = setInterval(async ()=>{
+    // Chỉ refresh khi không có modal nào đang mở và không đang upload
+    const anyModalOpen = document.querySelector('.modal-overlay.open');
+    if (anyModalOpen) return;
+    await silentRefresh();
+  }, REFRESH_INTERVAL);
+}
+
+function stopAutoRefresh(){
+  if (_refreshTimer){ clearInterval(_refreshTimer); _refreshTimer=null; }
+}
+
+// Refresh im lặng — không hiện loading overlay, không toast
+async function silentRefresh(){
+  if (!SCRIPT_URL || !currentUser) return;
+  try {
+    const res  = await fetch(SCRIPT_URL+'?action=getTasks', { method:'GET' });
+    const json = await res.json();
+    if (json.tasks && Array.isArray(json.tasks)){
+      tasks  = json.tasks;
+      nextId = json.tasks.length ? Math.max(...json.tasks.map(t=>t.id||0))+1 : 1;
+      // Cập nhật giao diện tùy theo màn hình đang hiển thị
+      if (currentRole==='manager'){
+        const activeTab = document.querySelector('#screen-manager .nav-btn.active');
+        if (activeTab){
+          const label = activeTab.querySelector('.nav-label')?.textContent||'';
+          if (label==='Công việc') renderMgrTasks();
+          else if (label==='Nhân viên') renderStaffTab();
+        }
+      } else {
+        renderStaffView();
+      }
+    }
+  } catch(e){ /* Im lặng khi lỗi mạng */ }
+}
+
+// Refresh thủ công — có animation trên nút, có toast
+async function manualRefresh(){
+  if (!SCRIPT_URL){ showToast('Chưa kết nối Google Sheet!','error'); return; }
+  // Xoay icon nút refresh
+  const btns = ['mgr-refresh-btn','staff-refresh-btn'].map(id=>document.getElementById(id)).filter(Boolean);
+  btns.forEach(b=>{ b.style.animation='spin .7s linear infinite'; b.disabled=true; });
+  try {
+    await silentRefresh();
+    showToast('✅ Đã đồng bộ dữ liệu mới nhất!','success');
+  } catch(e){
+    showToast('⚠️ Không thể kết nối Sheet','error');
+  } finally {
+    btns.forEach(b=>{ b.style.animation=''; b.disabled=false; });
+  }
 }
 
 // ══════════════════════════════════════════════
