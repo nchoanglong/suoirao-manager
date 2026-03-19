@@ -559,7 +559,48 @@ function rmThumb(who, idx){
   const el=document.getElementById(`prv-${who}-${idx}`); if(el) el.remove();
 }
 
-function getUrls(arr){ return arr.filter(Boolean).map(p=>p.driveUrl||p.dataUrl); }
+// ── Helper: render danh sách ảnh dưới dạng link Drive ──
+function renderPhotoLinks(photos, label){
+  if(!photos||!photos.length) return `<span style="font-size:12px;color:var(--gray-400)">Chưa có ảnh</span>`;
+  return photos.map((u,i)=>{
+    const url = resolvePhoto(u);
+    // Nếu là base64 (chưa upload Drive) → hiện text khác
+    const isBase64 = url.startsWith('data:');
+    const linkUrl  = isBase64 ? null : url;
+    if(isBase64){
+      return `<span style="font-size:12px;color:var(--amber);background:var(--amber-light);padding:4px 10px;border-radius:100px;display:inline-flex;align-items:center;gap:4px">⏳ Ảnh ${i+1} (chưa sync Drive)</span>`;
+    }
+    return `<a href="${linkUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--teal-light);color:var(--teal-dark);border-radius:100px;font-size:13px;font-weight:600;text-decoration:none;border:1.5px solid var(--teal)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Xem ảnh ${i+1}
+    </a>`;
+  }).join('');
+}
+const _photoCache = {};
+let _photoCacheIdx = 0;
+
+function cachePhoto(dataUrl){
+  // Nếu là URL thật (http/https/drive) thì dùng thẳng
+  if (!dataUrl || !dataUrl.startsWith('data:')) return dataUrl;
+  const key = 'photo_' + (++_photoCacheIdx);
+  _photoCache[key] = dataUrl;
+  return key; // trả về key ngắn
+}
+
+function resolvePhoto(keyOrUrl){
+  if (!keyOrUrl) return '';
+  // Nếu là key trong cache → lấy base64 gốc
+  if (_photoCache[keyOrUrl]) return _photoCache[keyOrUrl];
+  // Ngược lại là URL Drive thật
+  return keyOrUrl;
+}
+
+function getUrls(arr){
+  return arr.filter(Boolean).map(p=>{
+    const url = p.driveUrl || p.dataUrl;
+    return cachePhoto(url); // lưu vào cache, trả về key ngắn
+  });
+}
 
 // ══════════════════════════════════════════════
 //  LOGIN
@@ -778,7 +819,10 @@ function taskCardHTML(t, role){
   };
   const [bc,bl]=sm[t.status]||sm.new;
   const all=[...t.mgrPhotos,...t.staffPhotos];
-  const thumbs=all.slice(0,3).map((u,i)=>`<div class="thumb" onclick="event.stopPropagation();openLightbox(${JSON.stringify(all)},${i})" style="cursor:pointer"><img src="${u}" onerror="this.parentNode.innerHTML='📷'"></div>`).join('');
+  const drivePhotos = all.filter(u=>{ const r=resolvePhoto(u); return !r.startsWith('data:'); });
+  const thumbs = drivePhotos.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${drivePhotos.slice(0,3).map((u,i)=>`<a href="${resolvePhoto(u)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:11px;padding:4px 10px;background:var(--teal-light);color:var(--teal-dark);border-radius:100px;text-decoration:none;font-weight:600">📷 Ảnh ${i+1}</a>`).join('')}${drivePhotos.length>3?`<span style="font-size:11px;color:var(--gray-400)">+${drivePhotos.length-3}</span>`:''}</div>`
+    : (all.length ? `<div style="margin-top:6px"><span style="font-size:11px;color:var(--amber)">⏳ ${all.length} ảnh chưa sync</span></div>` : '');
   const sNote=t.staffPhotos.length?`<span>📸 ${t.staffPhotos.length} ảnh xác nhận</span>`:'';
   const assigneeRow = t.assignees.length
     ? `<div class="task-assignees">${t.assignees.map(a=>`<span class="assignee-chip">👤 ${a}</span>`).join('')}</div>`
@@ -792,7 +836,7 @@ function taskCardHTML(t, role){
     </div>
     ${assigneeRow}
     ${t.status!=='new'&&t.status!=='unassigned'?`<div class="progress-row"><div class="progress-bar"><div class="progress-fill ${t.pct<100?'amber':''}" style="width:${t.pct}%"></div></div><span class="progress-label">${t.pct}%</span></div>`:''}
-    ${thumbs?`<div class="thumb-strip">${thumbs}${all.length>3?`<span style="font-size:11px;color:var(--gray-400);align-self:center">+${all.length-3}</span>`:''}</div>`:''}
+    ${thumbs}
   </div>`;
 }
 
@@ -1471,8 +1515,8 @@ function openDetail(id, role){
   if (role==='mgr'){
     const sl={new:'🔴 Chưa bắt đầu',progress:'🟡 Đang thực hiện',done:'✅ Hoàn thành',unassigned:'❓ Chưa xác định'};
     const allPH=[...t.mgrPhotos,...t.staffPhotos];
-    const mgrPH=t.mgrPhotos.length ? t.mgrPhotos.map((u,i)=>`<img class="detail-photo" src="${u}" onclick="openLightbox(${JSON.stringify(allPH)},${i})" onerror="this.outerHTML='<div class=\\'detail-photo ph\\'>📷</div>'">`).join('') : `<div class="detail-photo ph">📷</div><span style="font-size:12px;color:var(--gray-400)">Chưa có ảnh</span>`;
-    const staffPH=t.staffPhotos.length ? t.staffPhotos.map((u,i)=>`<img class="detail-photo" src="${u}" onclick="openLightbox(${JSON.stringify(allPH)},${t.mgrPhotos.length+i})" onerror="this.outerHTML='<div class=\\'detail-photo ph\\'>📷</div>'">`).join('') : `<span style="font-size:12px;color:var(--gray-400)">Nhân viên chưa tải ảnh</span>`;
+    const mgrPH = renderPhotoLinks(t.mgrPhotos);
+    const staffPH = t.staffPhotos.length ? renderPhotoLinks(t.staffPhotos) : `<span style="font-size:12px;color:var(--gray-400)">Nhân viên chưa tải ảnh</span>`;
     document.getElementById('detail-mgr-content').innerHTML=`
       <div class="modal-title">${t.title}</div>
       <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-val">${sl[t.status]}</span></div>
@@ -1484,8 +1528,8 @@ function openDetail(id, role){
       <div class="info-row"><span class="info-label">📅 Giờ giao việc</span><span class="info-val" style="color:var(--teal-dark)">${normalizeDT(t.assignedAt)||'—'}</span></div>
       ${t.completedAt?`<div class="info-row"><span class="info-label">✅ Giờ hoàn thành</span><span class="info-val" style="color:var(--teal)">${normalizeDT(t.completedAt)}</span></div>`:''}
       ${t.desc?`<div style="background:var(--gray-50);border-radius:8px;padding:12px;margin:12px 0;font-size:13px;color:var(--gray-700);line-height:1.6">${t.desc}</div>`:''}
-      <div style="margin:14px 0 8px"><div class="info-label" style="margin-bottom:8px">📷 Ảnh hiện trường (quản lý gửi)</div><div class="detail-photos">${mgrPH}</div></div>
-      <div style="margin:14px 0 8px"><div class="info-label" style="margin-bottom:8px">📸 Ảnh xác nhận (nhân viên gửi)</div><div class="detail-photos">${staffPH}</div></div>
+      <div style="margin:14px 0 8px"><div class="info-label" style="margin-bottom:8px">📷 Ảnh hiện trường (quản lý gửi)</div><div style="display:flex;flex-wrap:wrap;gap:8px">${mgrPH}</div></div>
+      <div style="margin:14px 0 8px"><div class="info-label" style="margin-bottom:8px">📸 Ảnh xác nhận (nhân viên gửi)</div><div style="display:flex;flex-wrap:wrap;gap:8px">${staffPH}</div></div>
       ${t.staffNote?`<div style="background:var(--gray-50);border-radius:8px;padding:12px;margin:12px 0;border-left:3px solid var(--teal)"><div style="font-size:11px;font-weight:600;color:var(--gray-400);margin-bottom:4px">💬 GHI CHÚ NHÂN VIÊN</div><div style="font-size:13px;color:var(--gray-700);line-height:1.6">${t.staffNote}</div></div>`:''}
       <button onclick="openEditModal(${t.id})" style="width:100%;padding:13px;background:var(--teal-light);color:var(--teal-dark);border:1.5px solid var(--teal);border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px">✏️ Sửa công việc</button>
       ${t.status!=='done'?`<button onclick="markDoneMgr(${t.id})" style="width:100%;padding:13px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px">✓ Đánh dấu hoàn thành</button>`:''}
@@ -1542,7 +1586,7 @@ function openEditModal(id){
       <div style="display:flex;flex-wrap:wrap;gap:8px" id="existing-photos-grid">
       ${t.mgrPhotos.map((u,i)=>`
         <div style="position:relative;width:76px;height:60px" id="exist-wrap-${i}">
-          <img src="${u}" style="width:76px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--gray-200)">
+          <img src="${resolvePhoto(u)}" style="width:76px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--gray-200)">
           <button onclick="removeExistingPhoto(${id},${i})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:var(--red);border:none;border-radius:50%;color:white;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font);font-weight:700;line-height:1">✕</button>
         </div>`).join('')}
       </div>`;
@@ -1568,7 +1612,7 @@ function removeExistingPhoto(taskId, photoIdx){
   if(!t.mgrPhotos.length){ grid.parentElement.innerHTML=''; return; }
   grid.innerHTML=t.mgrPhotos.map((u,i)=>`
     <div style="position:relative;width:76px;height:60px" id="exist-wrap-${i}">
-      <img src="${u}" style="width:76px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--gray-200)">
+      <img src="${resolvePhoto(u)}" style="width:76px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--gray-200)">
       <button onclick="removeExistingPhoto(${taskId},${i})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:var(--red);border:none;border-radius:50%;color:white;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font);font-weight:700;line-height:1">✕</button>
     </div>`).join('');
 }
@@ -1658,7 +1702,7 @@ function openStaffDetail(id){
   activeDetailTaskId=id; selectedPct=null; staffPending=[];
   const t=tasks.find(x=>x.id===id); if(!t) return;
   if (t.pct>0&&t.pct<100) selectedPct=t.pct;
-  const mgrPH=t.mgrPhotos.length ? t.mgrPhotos.map((u,i)=>`<img class="detail-photo" src="${u}" onclick="openLightbox(${JSON.stringify(t.mgrPhotos)},${i})" onerror="this.outerHTML='<div class=\\'detail-photo ph\\'>📷</div>'">`).join('') : `<span style="font-size:12px;color:var(--gray-400)">Chưa có ảnh từ quản lý</span>`;
+  const mgrPH = t.mgrPhotos.length ? renderPhotoLinks(t.mgrPhotos) : `<span style="font-size:12px;color:var(--gray-400)">Chưa có ảnh từ quản lý</span>`;
 
   document.getElementById('detail-staff-content').innerHTML=`
     <div class="modal-title">${t.title}</div>
@@ -1668,7 +1712,7 @@ function openStaffDetail(id){
     <div class="info-row"><span class="info-label">Khu vực</span><span class="info-val">${t.area||'—'}</span></div>
     <div class="info-row"><span class="info-label">📅 Được giao lúc</span><span class="info-val" style="color:var(--teal-dark)">${normalizeDT(t.assignedAt)||'—'}</span></div>
     ${t.completedAt?`<div class="info-row"><span class="info-label">✅ Hoàn thành lúc</span><span class="info-val" style="color:var(--teal)">${normalizeDT(t.completedAt)}</span></div>`:''}
-    <div style="margin:14px 0 8px"><div class="info-label" style="margin-bottom:8px">📷 Ảnh hiện trường từ quản lý</div><div class="detail-photos">${mgrPH}</div></div>
+    <div style="margin:14px 0 8px"><div class="info-label" style="margin-bottom:8px">📷 Ảnh hiện trường từ quản lý</div><div style="display:flex;flex-wrap:wrap;gap:8px">${mgrPH}</div></div>
     ${t.status!=='done'?`
       <div style="margin:16px 0 8px;font-size:13px;font-weight:600;color:var(--gray-700)">Cập nhật tiến độ:</div>
       <div class="pct-buttons">
@@ -2044,10 +2088,18 @@ let _lbPhotos=[], _lbIdx=0;
 
 function openLightbox(photos, idx){
   if(!photos||!photos.length) return;
-  _lbPhotos=photos; _lbIdx=idx||0;
+  // Resolve từ cache nếu là key
+  _lbPhotos=photos.map(resolvePhoto);
+  _lbIdx=idx||0;
   lbRender();
   document.getElementById('lightbox').classList.add('open');
   document.body.style.overflow='hidden';
+}
+
+// Helper: render thẻ <img> với src được resolve từ cache
+function photoImg(key, cls, clickHandler, errHandler){
+  const src = resolvePhoto(key);
+  return `<img class="${cls}" src="${src}" onclick="${clickHandler}" onerror="${errHandler}">`;
 }
 
 function lbRender(){
